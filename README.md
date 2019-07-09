@@ -8,7 +8,7 @@ git clone https://github.com/amoffitt/MASQ /path/to/workdir
 
 # Set-up virtual environment using conda
 # Installs required Python and R packages
-conda env creat -f environment.yaml
+conda env create -f environment.yaml
 conda activate MASQ
 
 # Edit configuration as needed for MASQ analysis (see below)
