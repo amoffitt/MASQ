@@ -1,7 +1,7 @@
-# Multiplex Accurate Sensitive Quantitation (MASQ) Analysis and Primer Design Design Pipelines
+## Multiplex Accurate Sensitive Quantitation (MASQ) Analysis and Primer Design Design Pipelines
 
 
-## Set-up
+### Set-up
 ```bash
 # Clone workflow into working directory
 git clone https://github.com/amoffitt/MASQ /path/to/workdir
@@ -17,8 +17,6 @@ vi config.yaml
 # Execute MASQ analysis workflow (in dry-run mode)
 snakemake -n
 ```
-
-## Run the examples
 
 ### MASQ Analysis
 The MASQ analysis pipeline is contained in a Snakemake workflow (https://snakemake.readthedocs.io/en/stable/). The workflow is defined by rules in the Snakefile. Individual scripts called from the Snakefile are located in the scripts folder. 
