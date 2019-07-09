@@ -1,0 +1,24 @@
+name: MASQ
+dependencies:
+  - python=3.*
+  - snakemake
+  - matplotlib
+  - numpy
+  - scipy
+  - yaml
+  - dill
+  - editdistance
+  - pysam
+  - fastqc
+  - r-ggplot2
+  - r-cowplot
+  - primer3
+  - blat
+
+channels:
+  - anaconda
+  - r
+  - bioconda
+  - conda-forge
+  - nodefaults
+
