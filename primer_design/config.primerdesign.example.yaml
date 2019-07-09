@@ -1,0 +1,108 @@
+# Configuration file for primer design for MASQ method
+
+# Primary input is list of candidate SNVs (genome positions, ref and alt bases)
+# Output is primer design table, listing selected enzymes and primers
+# Requires separate installation of blat and primer3
+###########################################################
+
+# Sample and variant list
+sample: "primerdesign_example"
+variant_file: "primerdesign_example_input_snv_list.txt"
+
+# Enzyme selection
+#enzyme_list: ["AflII","AluI","AvrII","BamHI-HF","BfaI","BmtI-HF","BsrGI-HF","DraI","HaeIII","HindIII-HF","HpyCH4V","KpnI-HF","MfeI-HF","MluCI","MscI","MseI","MspI","NcoI-HF","NdeI","NlaIII","NsiI-HF","PsiI","PstI-HF","PvuII-HF","ScaI-HF","SpeI-HF","SphI-HF","SspI-HF","StuI","XbaI"]
+# Enzymes with most single hits, can run with only these for speed
+enzyme_list: ["AluI","BfaI","HpyCH4V","MluCI","MseI","NlaIII"]
+
+# WGS to check for snps in primer 
+wgs_ref: "../references/hg19/hg19.seq_dic.cpickle"
+# Can be list of multiple BAMs
+wgs_bam: "../example_inputs/example_wgs.bam"
+
+# Filter out regions with SNVs or Indels detected in region
+drop_snps_in_full_target: False
+drop_indel_in_full_target: True
+
+# Output folder
+output_folder: "design_results/"
+
+################## Reference files ##################
+# Enzyme cut sites
+genomebuildforcutsites: "hg19"
+# Examples included for hg19 - start of motif sequences in reference genome
+folder_with_cut_site_files: "enzyme_cut_sites/"
+cutsite_offset_file: "enzyme_cut_sites/enzyme_list_with_cutsite_offsets.txt"
+# Filenames to save processed enzyme dictionaries
+enzyme_top_pickle: "enzyme_cut_sites/enzyme_cut_sites.top.pickle"
+enzyme_btm_pickle: "enzyme_cut_sites/enzyme_cut_sites.btm.pickle"
+
+# Reference genome
+ref_pickle: "../references/hg19/hg19.seq_dic.cpickle"
+ref_fa: "../references/hg19/hg19.fa"
+
+# Trinucleotides to not include
+trinucleotide_file: "high_error_trinucleotides.txt"
+
+################## Programs #################################
+# BLAT and PRIMER3 should be installed via conda or placed in path
+# Check that this path points to the primer3 configuration folder
+primer3_thermo_param_folder: "../MASQ/share/primer3/primer3_config/"
+
+################# Primer design parameters ##################
+# If snp passes on both strands, keep which one
+strand_preference: "top" # or "bottom"
+# Relative to mutation site - where can enzyme cuts be
+# (For top strand - bottom strand will be flipped)
+good_cut_range: [19,70]
+bad_cut_range: [-21,18]
+frag_end_range: [-300,-22]
+# Overlapping cut sites
+drop_if_cut_site_dist_lt_x_bases: 4
+warning_if_cut_site_dist_lt_x_bases: 7
+# Primer3 settings
+PRIMER_OPT_SIZE: 20
+PRIMER_MIN_SIZE: 18
+PRIMER_MAX_SIZE: 36
+PRIMER_PRODUCT_SIZE_RANGE: [150,350]
+PRIMER_PRODUCT_OPT_SIZE: 175
+PRIMER_MIN_TM: 50
+PRIMER_MAX_TM: 68 
+PRIMER_OPT_TM: 62
+PRIMER_PAIR_MAX_DIFF_TM: 6
+PRIMER_MIN_GC: 20
+PRIMER_MAX_GC: 60
+PRIMER_MAX_HAIRPIN_TH: 50
+PRIMER_MAX_POLY_X: 8
+PRIMER_NUM_RETURN: 20
+# BLAT settings
+tileSize: 11
+stepSize: 4
+minIdentity: 100
+minScore: 15
+maxIntron: 0
+minIdentity_full: 80
+minScore_full: 100 
+maxIntron_full: 4
+# BLAT criteria for hits
+blat_num_mismatches: 2
+blat_perfect_num_hits: 1
+blat_ok_num_hits: 1
+blat_full_num_hits: 3
+
+################# Batch size parameters ##################
+min_batch_size: 15
+max_batch_size: 400
+target_batch_size: 50
+# Max number of SNPs to select 
+max_snp_select: 1000
+
+################ Trinucleotides ##########################
+filter_trinucleotides: True
+
+################ Detecting SNPs and Indels from WGS BAM ##########################
+basequal_cutoff: 28
+vaf_cutoff: 0.20
+indelaf_cutoff: 0.20
+var_count_cutoff: 2
+indel_count_cutoff: 2
+
