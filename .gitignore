@@ -1,0 +1,19 @@
+
+# Snakemake
+.snakemake*
+
+# Conda virtual environment
+venv*
+
+# Test run
+test_example1
+test_example2
+combined
+logs
+
+# MacOSX
+.DS_Store
+._.DS_Store
+
+# Python
+__pycache__
