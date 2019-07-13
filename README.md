@@ -11,7 +11,10 @@ git clone https://github.com/amoffitt/MASQ /path/to/workdir
 conda env create -f environment.yaml
 conda activate MASQ
 
-# Edit configuration as needed for MASQ analysis (see below)
+# Set-up reference genome files for examples
+bash ./prepare_example_references.sh
+
+# Edit configuration as needed for MASQ analysis
 vi config.yaml
 
 # Execute MASQ analysis workflow (in dry-run mode)
@@ -25,7 +28,7 @@ Example input files are included for testing of the workflow installation. Examp
 
 To run on a cluster, a cluster.yaml file can be added to specify parameters specific to your cluster setup, as described in the Snakemake documentation (https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html). 
 
-To run data other than the examples, edit the config.yaml file as necessary to point to FASTQ files, the loci table, WGS bam files, and other sample and run parameters. 
+To run data other than the examples, edit the config.yaml file as necessary to point to FASTQ files, the loci table, WGS bam files, matching reference files, and other sample and run parameters. 
 
 
 ### MASQ Primer Design
