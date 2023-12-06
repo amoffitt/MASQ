@@ -16,8 +16,7 @@ dependencies:
   - blat
 
 channels:
-  - anaconda
+  - conda-forge
   - r
   - bioconda
-  - conda-forge
   - nodefaults
