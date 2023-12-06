@@ -3,6 +3,7 @@ Helper script to convert genome FASTA into python dictionary and store as pickle
 '''
 
 import os
+import sys
 import pickle
 
 def make_ref_genome_pickle(ref_fasta, ref_pickle):
