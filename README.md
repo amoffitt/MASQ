@@ -23,8 +23,9 @@ snakemake -n
 # To run the 'standard PCR' example, rename config.standardPCR.yaml to config.yaml
 cp config.yaml config.masq.yaml 
 cp config.standardPCR.yaml config.yaml
-snakemake 
 
+# Execute MASQ analysis workflow (specify number of cores)
+snakemake --cores 1
 ```
 
 ### MASQ Analysis
