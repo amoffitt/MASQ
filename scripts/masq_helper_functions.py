@@ -10,6 +10,10 @@ import fileinput
 import operator
 import pickle
 import time
+
+import io
+from typing import Any, TextIO
+
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import editdistance
@@ -32,8 +36,10 @@ def setup_logger(logfile,name):
     return(logger)
     # debug, info, warning, error
 
+
 # Read and write locus/SNV table 
-def load_snv_table(infile):
+def load_snv_table(infile: TextIO) -> dict[str, Any]:
+    """Read locus/SNV table from file."""
     allowed_cols=['loc','chr','posi','specific-primer-1','specific-primer-2','trimmed-target-seq','target_locs','ref-alt_allele','indel_start','indel_length','indel_seq','add-targets','strand','fragment-start','fragment-end']
     snv_table=dict()
     headings = infile.readline().strip().split("\t")
@@ -50,19 +56,22 @@ def load_snv_table(infile):
     infile.close()
     return(snv_table)
 
-def write_snv_table(table,outfile):
+
+def write_snv_table(table: dict[str, Any], outfile: TextIO) -> None:
     outfile.write(tabprint(list(table.keys()))+"\n")
     for i in range(len(table['loc'])):
         line = []
-        for key,val in table.items():
+        for _, val in table.items():
             line.append(val[i])
         outfile.write(tabprint(line)+"\n")
 
-## get reverse complement of sequence
-def reverseComplement(seq):
-    INDICT = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'N':'N',
-              'a':'t', 'c':'g', 'g':'c', 't':'a', 'n':'n'}
-    return "".join([INDICT[base] for base in seq[::-1]])
+
+def reverseComplement(seq: str) -> str:
+    """Get reverse complement of sequence."""
+    indict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N',
+              'a': 't', 'c': 'g', 'g': 'c', 't': 'a', 'n': 'n'}
+    return "".join([indict[base] for base in seq[::-1]])
+
 
 ## get complement of sequence
 def complement(seq):
@@ -76,15 +85,18 @@ def convert_cigar_string(cigar):
     match = re.findall(r'(\d+)(\w)', cigar)
     return [(y, int(x)) for x, y in match]
 
-## compute hamming distance
-def hamming(str1, str2, use_edit_distance=False):
+
+def hamming(
+    str1: str, str2: str, use_edit_distance: bool = False
+) -> int:
+    """Compute hamming distance."""
     # only compares up until end of shortest string
     ne = operator.ne
     if use_edit_distance:
-        L = min(len(str1),len(str2))
-        return editdistance.eval(str1[:L],str2[:L])
-    else:
-        return sum(map(ne, str1, str2))  
+        min_len = min(len(str1), len(str2))
+        return int(editdistance.eval(str1[:min_len],str2[:min_len]))
+
+    return int(sum(map(ne, str1, str2)))
 
 ## simple class for counting pairs
 def double_counter():
@@ -118,63 +130,63 @@ def test_pair_withNs(a1, a2, b1, b2, maxNratio=0.2,use_edit_distance=False):
 
 ########################################################################
 
-'''
-   Class for walking through a paired-end data of fastq.gz files
-   where the reads are organized in pairs in the file.
-   Once initialized with two filenames (for read1 and read2 fastq.gz files)
-   it returns an iterator which returns one read pair at a time.
-'''
-class readWalker():
-    ## standard  function for initilizing a class
-    def __init__(self, read1filename, read2filename):
-        self.read1file = gzip.open(read1filename, 'rt') # changed from r to rt
-        self.read2file = gzip.open(read2filename, 'rt')
-        gzip.open
-    ## standard function for classes that implement iteration
-    def __iter__(self):
-        return self
+# '''
+#    Class for walking through a paired-end data of fastq.gz files
+#    where the reads are organized in pairs in the file.
+#    Once initialized with two filenames (for read1 and read2 fastq.gz files)
+#    it returns an iterator which returns one read pair at a time.
+# '''
+# class readWalker():
+#     ## standard  function for initilizing a class
+#     def __init__(self, read1filename, read2filename):
+#         self.read1file = gzip.open(read1filename, 'rt') # changed from r to rt
+#         self.read2file = gzip.open(read2filename, 'rt')
+#         gzip.open
+#     ## standard function for classes that implement iteration
+#     def __iter__(self):
+#         return self
 
-    ## return the next pair
-    # Python2->3 replace next with __next__
-    # # Python2->3 replace next with readline
-    def __next__(self):
-        ## try to load data from read files/
-        ## fail at the end of file, so stop iterating at "except"
-        try:
-            ## load the read name (redundantly) from each file
-            pairID = self.read1file.readline().strip()
-            pairID = self.read2file.readline().strip()
-            ## read the sequence data
-            seq1            = self.read1file.readline().strip()
-            seq2            = self.read2file.readline().strip()
-            ## skip the "+" line
-            self.read1file.readline()
-            self.read2file.readline()
-            ## read the qualities
-            qual1           = self.read1file.readline().strip()
-            qual2           = self.read2file.readline().strip()
-            ## build the output object
-            nextPair        = [pairID,
-                               seq1, qual1,
-                               seq2, qual2]
-        ## if we failed to read, set nextPair to "None"
-            if not pairID:  # returned empty string
-                nextPair = None
-        except:
-            nextPair = None
+#     ## return the next pair
+#     # Python2->3 replace next with __next__
+#     # # Python2->3 replace next with readline
+#     def __next__(self):
+#         ## try to load data from read files/
+#         ## fail at the end of file, so stop iterating at "except"
+#         try:
+#             ## load the read name (redundantly) from each file
+#             pairID = self.read1file.readline().strip()
+#             pairID = self.read2file.readline().strip()
+#             ## read the sequence data
+#             seq1            = self.read1file.readline().strip()
+#             seq2            = self.read2file.readline().strip()
+#             ## skip the "+" line
+#             self.read1file.readline()
+#             self.read2file.readline()
+#             ## read the qualities
+#             qual1           = self.read1file.readline().strip()
+#             qual2           = self.read2file.readline().strip()
+#             ## build the output object
+#             nextPair        = [pairID,
+#                                seq1, qual1,
+#                                seq2, qual2]
+#         ## if we failed to read, set nextPair to "None"
+#             if not pairID:  # returned empty string
+#                 nextPair = None
+#         except:
+#             nextPair = None
 
-        ## if we had to stop, close files and raise StopIteration
-        if nextPair == None:
-            self.close()
-            #return  # tried this to get it to stop
-            raise StopIteration
-        ## otherwise return the pair
-        else:
-            return nextPair
-    ## close the iterator
-    def close(self):
-        self.read1file.close()
-        self.read2file.close()
+#         ## if we had to stop, close files and raise StopIteration
+#         if nextPair == None:
+#             self.close()
+#             #return  # tried this to get it to stop
+#             raise StopIteration
+#         ## otherwise return the pair
+#         else:
+#             return nextPair
+#     ## close the iterator
+#     def close(self):
+#         self.read1file.close()
+#         self.read2file.close()
 
 ########################################################################
 
