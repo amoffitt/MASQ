@@ -2,23 +2,20 @@
 Helper functions for MASQ pipeline
 '''
 
-import os, sys
-import numpy as np
-import gzip
-from collections import Counter, defaultdict
-import fileinput
+import sys
 import operator
-import pickle
-import time
-
-import io
-from typing import Any, TextIO
-
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import cm
-import editdistance
 import re
 import logging
+
+from typing import Any, TextIO
+from collections import Counter, defaultdict
+
+import numpy as np
+
+import matplotlib.pyplot as plt
+
+import editdistance
+
 
 ## nice function for printing a line
 def tabprint(A):
