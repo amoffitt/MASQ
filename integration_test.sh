@@ -6,8 +6,10 @@
 rm -rf example_outputs
 rm -rf test_example1
 rm -rf test_example2
+rm -rf combined
+rm -rf .snakemake
 
-tar zxvf example_outputs.tar.gz
+tar zxf example_outputs.tar.gz
 
 snakemake -j 10
 
