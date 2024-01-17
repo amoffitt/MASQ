@@ -25,12 +25,25 @@ class PairedReads:
                 not os.path.exists(read2filename):
             raise IOError(
                 f"File not found: {read1filename} or {read2filename}")
-        self.read1file = pysam.FastxFile(read1filename)
-        self.read2file = pysam.FastxFile(read2filename)
+        self.r1filename = read1filename
+        self.r2filename = read2filename
+        self.read1file: Optional[pysam.FastxFile] = None
+        self.read2file: Optional[pysam.FastxFile] = None
+
+    def open(self) -> PairedReads:
+        self.read1file = pysam.FastxFile(self.r1filename)
+        self.read2file = pysam.FastxFile(self.r2filename)
+        return self
+
+    def is_open(self) -> bool:
+        return self.read1file is not None and self.read2file is not None
 
     def fetch(
         self
     ) -> Generator[tuple[pysam.FastqRecord, pysam.FastqRecord], None, None]:
+        if self.read1file is None or self.read2file is None:
+            raise IOError("Files not opened")
+
         try:
             for entry1, entry2 in zip(self.read1file, self.read2file):
                 if not entry1.name or not entry2.name:
@@ -47,12 +60,17 @@ class PairedReads:
             logger.error("value error", exc_info=True)
 
     def close(self) -> None:
+        if not self.is_open():
+            return
+        assert self.read1file is not None
+        assert self.read2file is not None
         self.read1file.close()
         self.read2file.close()
 
     def __enter__(
         self
     ) -> Generator[tuple[pysam.FastqRecord, pysam.FastqRecord], None, None]:
+        self.open()
         return self.fetch()
 
     def __exit__(
