@@ -16,8 +16,6 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 
 
-from masq_helper_functions import tabprint
-
 ########################################################################
 
 # Start timer

@@ -16,9 +16,11 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 
 
-from masq_helper_functions import tabprint
 from masq_helper_functions import plot_number_of_reads_per_tag
 from masq_helper_functions import plot_at_least_x_reads_per_tag
+
+from masq.utils.io import tabprint
+
 ########################################################################
 
 # Start timer

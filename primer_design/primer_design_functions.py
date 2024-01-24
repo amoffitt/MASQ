@@ -9,8 +9,7 @@ import re
 import pickle
 import subprocess
 
-def tabprint(A):
-    return "\t".join(map(str, A))
+from masq.utils.io import tabprint
 
 def reverseComplement(seq):
     INDICT = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'N':'N',
