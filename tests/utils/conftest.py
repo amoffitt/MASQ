@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def fixtures_filename() -> Callable[[str], str]:
 
     def build_filename(filename: str) -> str:
