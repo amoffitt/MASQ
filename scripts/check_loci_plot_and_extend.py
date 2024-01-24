@@ -18,10 +18,12 @@ from matplotlib.pyplot import cm
 import editdistance
 import numpy as np
 import pysam
+from masq.utils.snv_table import load_snv_table, write_snv_table
+
 from masq_helper_functions import tabprint
 from masq_helper_functions import reverseComplement
 from masq_helper_functions import convert_cigar_string
-from masq_helper_functions import setup_logger, load_snv_table, write_snv_table
+from masq_helper_functions import setup_logger
 
 ########################################################################
 # Start timer
@@ -373,7 +375,7 @@ for i, (new_targets, more_info) in enumerate(zip(all_targets, target_info)):
 print("End loop")
 print(snv_info)
 
-write_snv_table(snv_info,outfile)
+write_snv_table(snv_info, outfile)
 
 ########################################################################
 # Close files

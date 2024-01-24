@@ -18,13 +18,16 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import logging
 
+from masq.util.snv_table import load_snv_table
+
 from masq_helper_functions import tabprint, hamming
 from masq_helper_functions import hamming
 from masq_helper_functions import hamming_withNs
 from masq_helper_functions import test_pair
 from masq_helper_functions import test_pair_withNs
 from masq_helper_functions import reverseComplement
-from masq_helper_functions import setup_logger, load_snv_table
+from masq_helper_functions import setup_logger
+
 ########################################################################
 # Start timer
 t0 = time.time()
