@@ -22,7 +22,7 @@ import editdistance
 import re
 import logging
 
-from masq.utils.snv_table import load_snv_table
+from masq.utils.io import load_snv_table
 
 from masq_helper_functions import tabprint, hamming, double_counter
 from masq_helper_functions import convert_quality_score
