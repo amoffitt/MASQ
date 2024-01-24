@@ -14,8 +14,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
-from masq_helper_functions import tabprint
 from masq_helper_functions import setup_logger
+
+from masq.utils.io import tabprint
 
 ########################################################################
 # Start timer
