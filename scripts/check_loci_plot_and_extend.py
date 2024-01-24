@@ -19,8 +19,8 @@ import editdistance
 import numpy as np
 import pysam
 from masq.utils.io import load_snv_table, write_snv_table, tabprint
+from masq.utils.seqs import reverse_complement
 
-from masq_helper_functions import reverseComplement
 from masq_helper_functions import convert_cigar_string
 from masq_helper_functions import setup_logger
 
@@ -121,7 +121,7 @@ for i,loc in enumerate(snv_info['loc']):
         # if the target sequence was on the bottom strand...
         bottom_start = pos - (length - aml_loc)
         bottom_end = bottom_start + length
-        bottom_match = reverseComplement(seq_dic[chrom][bottom_start:bottom_end])
+        bottom_match = reverse_complement(seq_dic[chrom][bottom_start:bottom_end])
 
         log.debug('Target seq : %s' % int_seq)
         log.debug('Top match  : %s' % top_match)

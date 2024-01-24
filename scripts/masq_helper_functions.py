@@ -30,18 +30,18 @@ def setup_logger(logfile,name):
     # debug, info, warning, error
 
 
-def reverseComplement(seq: str) -> str:
-    """Get reverse complement of sequence."""
-    indict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N',
-              'a': 't', 'c': 'g', 'g': 'c', 't': 'a', 'n': 'n'}
-    return "".join([indict[base] for base in seq[::-1]])
+# def reverseComplement(seq: str) -> str:
+#     """Get reverse complement of sequence."""
+#     indict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N',
+#               'a': 't', 'c': 'g', 'g': 'c', 't': 'a', 'n': 'n'}
+#     return "".join([indict[base] for base in seq[::-1]])
 
 
-## get complement of sequence
-def complement(seq):
-    INDICT = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'N':'N',
-              'a':'t', 'c':'g', 'g':'c', 't':'a', 'n':'n'}
-    return "".join([INDICT[base] for base in seq])
+# ## get complement of sequence
+# def complement(seq):
+#     INDICT = {'A':'T', 'C':'G', 'G':'C', 'T':'A', 'N':'N',
+#               'a':'t', 'c':'g', 'g':'c', 't':'a', 'n':'n'}
+#     return "".join([INDICT[base] for base in seq])
 
 # splits cigar string into tuples of (letter, number)
 def convert_cigar_string(cigar):

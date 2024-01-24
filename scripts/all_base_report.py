@@ -19,13 +19,13 @@ from matplotlib.pyplot import cm
 import logging
 
 from masq.utils.io import load_snv_table, tabprint
+from masq.utils.seqs import reverse_complement
 
 from masq_helper_functions import  hamming
 from masq_helper_functions import hamming
 from masq_helper_functions import hamming_withNs
 from masq_helper_functions import test_pair
 from masq_helper_functions import test_pair_withNs
-from masq_helper_functions import reverseComplement
 from masq_helper_functions import setup_logger
 
 ########################################################################
@@ -182,7 +182,7 @@ var_base = altbase[region_index]
 
 # Now things that vary with indels
 list_region_seq = [region_array[region_index]]
-list_region_rc  = [reverseComplement(region_array[region_index])]
+list_region_rc  = [reverse_complement(region_array[region_index])]
 list_region_len = [len(region_array[region_index])]
 
 ## get the AML target positions (may be more than one)
@@ -214,7 +214,7 @@ if 'indel_start' in snv_info:
             new_region_seq = new_region_seq[0:istart] + iseq + new_region_seq[istart:]
 
         list_region_seq.append(new_region_seq)
-        list_region_rc.append(reverseComplement(new_region_seq))
+        list_region_rc.append(reverse_complement(new_region_seq))
         list_region_len.append(len(new_region_seq))
 
         # Adjust targets
@@ -545,7 +545,7 @@ for refiter in range(len(list_targets)):
     for pos, data in enumerate(base_counter2):
         aml_loc = int(pos in r2_targets) + int(pos in r2_aml_only)
         if aml_loc==2:
-            variant_read_base = reverseComplement(var_base)
+            variant_read_base = reverse_complement(var_base)
             variant_template_base = var_base
         else:
             variant_read_base = '-'
@@ -633,7 +633,7 @@ for refiter in range(len(list_targets)):
     for pos, data in enumerate(base_counter2_proportions):
         aml_loc = int(pos in r2_targets) + int(pos in r2_aml_only)
         if aml_loc==2:
-            variant_read_base = reverseComplement(var_base)
+            variant_read_base = reverse_complement(var_base)
             variant_template_base = var_base
         else:
             variant_read_base = '-'
@@ -661,7 +661,7 @@ for refiter in range(len(list_targets)):
                         total = np.sum(data[cindex,0])
 
                         alt_read_trinuc = read_trinuc[0] + nuc + read_trinuc[2]
-                        alt_template_trinuc = template_trinuc[0] + reverseComplement(nuc) + template_trinuc[2]
+                        alt_template_trinuc = template_trinuc[0] + reverse_complement(nuc) + template_trinuc[2]
 
                         baseinfo = [alt_read_trinuc,alt_template_trinuc,nuc,PROPORTION,total,count,'.','.',cov] 
 
@@ -746,7 +746,7 @@ for refiter in range(len(list_targets)):
     for pos, data in enumerate(base_counter2_exact):
         aml_loc = int(pos in r2_targets) + int(pos in r2_aml_only)
         if aml_loc==2:
-            variant_read_base = reverseComplement(var_base)
+            variant_read_base = reverse_complement(var_base)
             variant_template_base = var_base
         else:
             variant_read_base = '-'
@@ -771,7 +771,7 @@ for refiter in range(len(list_targets)):
                 total = np.sum(data[cindex])
 
                 alt_read_trinuc = read_trinuc[0] + nuc + read_trinuc[2]
-                alt_template_trinuc = template_trinuc[0] + reverseComplement(nuc) + template_trinuc[2]
+                alt_template_trinuc = template_trinuc[0] + reverse_complement(nuc) + template_trinuc[2]
 
                 baseinfo = [alt_read_trinuc,alt_template_trinuc,nuc,'.',total,count,'.',cov,'.'] 
 
@@ -849,7 +849,7 @@ for refiter in range(len(list_targets)):
     for pos, data in enumerate(base_counter2):
         aml_loc = int(pos in r2_targets) + int(pos in r2_aml_only)
         if aml_loc==2:
-            variant_read_base = reverseComplement(var_base)
+            variant_read_base = reverse_complement(var_base)
             variant_template_base = var_base
         else:
             variant_read_base = '-'
@@ -874,7 +874,7 @@ for refiter in range(len(list_targets)):
                 total = np.sum(data[cindex])
 
                 alt_read_trinuc = read_trinuc[0] + nuc + read_trinuc[2]
-                alt_template_trinuc = template_trinuc[0] + reverseComplement(nuc) + template_trinuc[2]
+                alt_template_trinuc = template_trinuc[0] + reverse_complement(nuc) + template_trinuc[2]
 
                 baseinfo = [alt_read_trinuc,alt_template_trinuc,nuc,'.',total,count,cov,'.','.'] 
 
