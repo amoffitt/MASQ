@@ -17,10 +17,6 @@ import matplotlib.pyplot as plt
 import editdistance
 
 
-## nice function for printing a line
-def tabprint(A):
-    return "\t".join(map(str, A))
-
 # Logging
 def setup_logger(logfile,name):
     logger = logging.getLogger(name)

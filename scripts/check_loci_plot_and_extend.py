@@ -18,9 +18,8 @@ from matplotlib.pyplot import cm
 import editdistance
 import numpy as np
 import pysam
-from masq.utils.io import load_snv_table, write_snv_table
+from masq.utils.io import load_snv_table, write_snv_table, tabprint
 
-from masq_helper_functions import tabprint
 from masq_helper_functions import reverseComplement
 from masq_helper_functions import convert_cigar_string
 from masq_helper_functions import setup_logger

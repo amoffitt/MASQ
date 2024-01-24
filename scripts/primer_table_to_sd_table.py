@@ -3,7 +3,9 @@ Converts primer table output from primer design functions to input table needed 
 '''
 import sys
 import pickle
-from primer_design_functions import tabprint
+
+from masq.utils.io import tabprint
+
 from primer_design_functions import reverseComplement
 
 primer_table=snakemake.input.oldtable

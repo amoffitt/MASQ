@@ -24,12 +24,13 @@ import logging
 
 from masq.utils.io import load_snv_table
 
-from masq_helper_functions import tabprint, hamming, double_counter
+from masq_helper_functions import hamming, double_counter
 from masq_helper_functions import convert_quality_score
 from masq_helper_functions import hamming_withNs, check_tag_structure
 from masq_helper_functions import setup_logger
 
 from masq.utils.paired_reads import PairedReads
+from masq.utils.io import tabprint
 
 ########################################################################
 # Start timer
