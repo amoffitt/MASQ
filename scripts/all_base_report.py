@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import logging
 
-from masq.util.snv_table import load_snv_table
+from masq.utils.io import load_snv_table
 
 from masq_helper_functions import tabprint, hamming
 from masq_helper_functions import hamming
