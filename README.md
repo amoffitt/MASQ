@@ -49,3 +49,20 @@ python select_enzymes_for_snps.py config.primerdesign.example.yaml 2>&1 | tee lo
 Example configuration file and example input SNV lists are included in the primer\_design folder. Enzyme cut site files are included for hg19. Edit the configuration file to point to different SNV files or change the primer design parameters. 
 
 BLAT and Primer3 are installed via the provided conda environment file, but can be installed separately and placed in the path. 
+
+### MASQ developement
+
+Update the MASQ environment with dependencies needed for development:
+
+```bash
+mamba env update -f dev-environment.yaml
+```
+
+In the activated `MASQ` development environment and from the `MASQ` root
+directory run:
+
+```bash
+pip install -e .
+```
+
+to install an editable version of the `masq` package.

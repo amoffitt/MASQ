@@ -1,0 +1,14 @@
+name: MASQ
+dependencies:
+- pytest
+- samtools
+- mypy
+- pylint
+- flake8
+
+channels:
+  - conda-forge
+  - r
+  - bioconda
+  - nodefaults
+
