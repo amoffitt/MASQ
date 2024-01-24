@@ -5,8 +5,8 @@ import sys
 import pickle
 
 from masq.utils.io import tabprint
+from masq.utils.seqs import reverse_complement
 
-from primer_design_functions import reverseComplement
 
 primer_table=snakemake.input.oldtable
 
@@ -51,7 +51,7 @@ with open(snakemake.output.newtable,'w') as fout:
                 target_seq_ref=ref_dic[chrom][target_start:target_end]
 
                 if strand=="bottom":
-                    target_seq_stranded = reverseComplement(target_seq_ref)
+                    target_seq_stranded = reverse_complement(target_seq_ref)
                     relative_pos = target_end - pos
                 elif strand=="top":
                     target_seq_stranded = target_seq_ref
