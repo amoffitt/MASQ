@@ -11,6 +11,10 @@ import fileinput
 import operator
 import pickle
 import time
+
+from masq.utils.io import load_snv_table, write_snv_table, tabprint
+from masq.utils.seqs import reverse_complement
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -18,8 +22,6 @@ from matplotlib.pyplot import cm
 import editdistance
 import numpy as np
 import pysam
-from masq.utils.io import load_snv_table, write_snv_table, tabprint
-from masq.utils.seqs import reverse_complement
 
 from masq_helper_functions import convert_cigar_string
 from masq_helper_functions import setup_logger

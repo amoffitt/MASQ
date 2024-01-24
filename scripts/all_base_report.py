@@ -97,13 +97,6 @@ withintagerrors_file = open(snakemake.output.withintagerrors_table, 'w')
 
 
 ########################################################################
-## load the genome sequence from a pickle file
-log.info('Loading reference genome pickle')
-seq_pickle = snakemake.params.ref_genome
-seq_dic = pickle.load(open(seq_pickle, 'rb'))
-log.info('Done loading reference genome pickle')
-
-########################################################################
 # Nucleotide <-> Integer mapping
 NUCS = ["A", "C", "G", "T"]
 BASES = ["A", "C", "G", "T", "N"]
