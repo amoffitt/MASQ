@@ -1,20 +1,21 @@
-'''
-Converts primer table output from primer design functions to input table
+"""Converts primer table output from primer design functions to input table
 needed for MASQ analysis pipeline
-'''
-import sys
+"""
 
+import sys
 import argparse
 from typing import Optional
 
-from masq.utils.io import tabprint
+import pandas as pd
+
+from masq.utils.regions import Region
 from masq.utils.seqs import reverse_complement
 from masq.utils.reference_genome import ReferenceGenome
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Converts primer table output from primer design "
+        description="Converts primer table from primer design "
         "functions to input table needed for MASQ analysis pipeline"
     )
     parser.add_argument(
@@ -36,71 +37,63 @@ def main(argv: Optional[list[str]] = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
     args = parse_args(argv)
-    c = 0
-    loci = 0
-    with ReferenceGenome(args.ref_genome) as ref_genome, \
-            open(args.output_table, 'w') as fout, \
-            open(args.primer_table, 'r') as f:
-        for line in f:
-            if c == 0:
-                header = line.strip().split("\t")
-                fout.write(tabprint([
-                    "loc", "chr", "posi",
-                    "specific-primer-1", "specific-primer-2",
-                    "trimmed-target-seq", "target_locs",
-                    "ref-alt_allele"]))
-                fout.write("\n")
 
-            else:
-                X = line.strip().split("\t")
+    primer_df = pd.read_csv(args.primer_table, sep="\t")
+    result = []
 
-                # chrom=X[header.index("chrom")][3:]
-                chrom = X[header.index("chrom")]
-                pos = int(X[header.index("pos")])
-                primer1 = X[header.index("downstream_primerseq")]
-                primer2 = X[header.index("cutadj_primerseq")]
-                strand = X[header.index("strand")]
-                refbase = X[header.index("ref_trinuc")][1]
-                altbase = X[header.index("alt_trinuc")][1]
-                ref_alt = f"{refbase}_{altbase}"
+    with ReferenceGenome(args.ref_genome) as ref_genome:
+        for index, rec in primer_df.iterrows():
+            chrom = rec["chrom"]
+            pos = rec["pos"]
+            primer1 = rec["downstream_primerseq"]
+            primer2 = rec["cutadj_primerseq"]
+            strand = rec["strand"]
+            refbase = rec["ref_trinuc"][1]
+            altbase = rec["alt_trinuc"][1]
+            ref_alt = f"{refbase}_{altbase}"
 
-                # get target sequence coordinates based on primer Coordinates
-                # pull sequence from dictionary
-                # reverse complement depending on strand
-                # target position is relative to target seq
-                primercoords1 = \
-                    X[header.index("cutadj_primer_coordinates")] \
-                    .split(':')[1] \
-                    .split('-')
-                primercoords1.extend(
-                    X[header.index("downstream_primer_coordinates")]
-                    .split(':')[1]
-                    .split('-'))
-                primercoords = [int(x) for x in primercoords1]
-                primercoords.sort()
+            # get target sequence coordinates based on primer Coordinates
+            # pull sequence from dictionary
+            # reverse complement depending on strand
+            # target position is relative to target seq
+            primer_region1 = Region.from_string(
+                rec["cutadj_primer_coordinates"])
+            primer_region2 = Region.from_string(
+                rec["downstream_primer_coordinates"])
+            assert primer_region1.chrom == primer_region2.chrom == chrom
 
-                target_start = primercoords[1]
-                target_end = primercoords[2]-1
+            primercoords = [
+                primer_region1.start, primer_region1.stop,
+                primer_region2.start, primer_region2.stop
+            ]
+            primercoords.sort()
 
-                target_seq_ref = ref_genome.get_sequence(
-                    chrom, target_start, target_end)
+            target_start = primercoords[1]
+            target_end = primercoords[2] - 1
 
-                if strand == "bottom":
-                    target_seq_stranded = reverse_complement(target_seq_ref)
-                    relative_pos = target_end - pos
-                elif strand == "top":
-                    target_seq_stranded = target_seq_ref
-                    relative_pos = pos - target_start - 1
+            target_seq_ref = ref_genome.get_sequence(
+                chrom, target_start, target_end)
 
-                fout.write(tabprint([
-                    loci, chrom, pos,
-                    primer1, primer2,
-                    target_seq_stranded, relative_pos,
-                    ref_alt]))
-                fout.write("\n")
+            if strand == "bottom":
+                target_seq_stranded = reverse_complement(target_seq_ref)
+                relative_pos = target_end - pos
+            elif strand == "top":
+                target_seq_stranded = target_seq_ref
+                relative_pos = pos - target_start - 1
 
-                loci = loci+1
-            c = c+1
+            result.append({
+                "loc": index,
+                "chr": chrom,
+                "posi": pos,
+                "specific-primer-1": primer1,
+                "specific-primer-2": primer2,
+                "trimmed-target-seq": target_seq_stranded,
+                "target_locs": relative_pos,
+                "ref-alt_allele": ref_alt,
+            })
+
+    result_df = pd.DataFrame.from_records(result)
+    result_df.to_csv(args.output_table, sep="\t", index=False)
 
 
 if __name__ == "__main__":
