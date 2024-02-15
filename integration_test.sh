@@ -11,7 +11,7 @@ rm -rf .snakemake
 
 tar zxf example_outputs.tar.gz
 
-snakemake -j 10
+snakemake -j
 
 diff -r -x logs -x fastqc \
     example_outputs/test_example1 \
