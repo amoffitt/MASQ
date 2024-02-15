@@ -22,3 +22,9 @@ references
 
 masq.egg-info
 data
+
+primer_design/design_results/
+primer_design/enzyme_cut_sites/*.pickle
+primer_design/log.primerdesign.*
+
+*.seq_dic.cpickle
