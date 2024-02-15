@@ -46,6 +46,7 @@ class ReferenceGenome:
         return self._genome_file is not None
 
     def open(self) -> ReferenceGenome:
+        # pylint: disable=consider-using-with
         self._genome_file = open(self.filename, "r")
         self._load_index()
         return self
@@ -71,6 +72,15 @@ class ReferenceGenome:
         return list(self._genome_index.keys())
 
     def get_sequence(self, chrom: str, start: int, stop: int) -> str:
+        """Returns a sequence from the reference genome.
+
+        Returns a subsequence from the reference genome at chromosome `chrom`
+        in the interval [start, stop). The coordinates are 0-based.
+        Args:
+            chrom: chromosome name
+            start: 0-based start position
+            stop: 0-based stop position
+        """
         if not self.is_open():
             raise IOError(f"reference genome is not open: {self.filename}")
         assert self._genome_file is not None
@@ -81,11 +91,11 @@ class ReferenceGenome:
         seq_line_length = self._genome_index[chrom]["seq_line_length"]
         seq_start = self._genome_index[chrom]["start"]
         start_index: int = seq_start \
-            + start - 1 \
-            + (start - 1) // seq_line_length
+            + start \
+            + start // seq_line_length
         self._genome_file.seek(start_index)
 
-        ll = stop - start + 1
+        ll = stop - start
         x = 1 + ll // seq_line_length
 
         w = self._genome_file.read(ll + x)

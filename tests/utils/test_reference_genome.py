@@ -24,11 +24,11 @@ def test_reference_genome_simple(acgt_genome: ReferenceGenome) -> None:
 
 
 @pytest.mark.parametrize('chrom, start, stop, expected', [
-    ('chr1', 1, 4, 'ACGT'),
-    ('chr1', 101, 104, 'ACGT'),
-    ('chr2', 101, 104, 'ACGT'),
-    ('chr2', 201, 204, 'ACGT'),
-    ('chr3', 197, 204, 'ACGTACGT'),
+    ('chr1', 0, 4, 'ACGT'),
+    ('chr1', 100, 104, 'ACGT'),
+    ('chr2', 100, 104, 'ACGT'),
+    ('chr2', 200, 204, 'ACGT'),
+    ('chr3', 196, 204, 'ACGTACGT'),
 ])
 def test_reference_genome_get_sequence(
     acgt_genome: ReferenceGenome,
@@ -43,11 +43,11 @@ def test_reference_genome_get_sequence(
 
 
 @pytest.mark.parametrize('chrom, start, stop, expected', [
-    ('chr1', 1, 4, 'ACGT'),
-    ('chr1', 101, 104, 'ACGT'),
-    ('chr2', 101, 104, 'ACGT'),
-    ('chr2', 201, 204, 'ACGT'),
-    ('chr3', 197, 204, 'ACGTACGT'),
+    ('chr1', 0, 4, 'ACGT'),
+    ('chr1', 100, 104, 'ACGT'),
+    ('chr2', 100, 104, 'ACGT'),
+    ('chr2', 200, 204, 'ACGT'),
+    ('chr3', 196, 204, 'ACGTACGT'),
 ])
 def test_reference_genome_contextmanager_get_sequence(
     acgt_genome: ReferenceGenome,

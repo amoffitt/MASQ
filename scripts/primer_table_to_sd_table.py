@@ -6,13 +6,14 @@ import pickle
 
 from masq.utils.io import tabprint
 from masq.utils.seqs import reverse_complement
+from masq.utils.reference_genome import ReferenceGenome
 
 
-primer_table=snakemake.input.oldtable
+primer_table = snakemake.input.oldtable
 
 # sequence dictionary
-seq_pickle=snakemake.params.ref_genome
-ref_dic = pickle.load(open(seq_pickle, 'rb'))
+ref_genome_filename = snakemake.params.ref_genome
+ref_genome = ReferenceGenome(ref_genome_filename).open()
 
 
 c=0
@@ -48,7 +49,8 @@ with open(snakemake.output.newtable,'w') as fout:
                 target_start = primercoords[1]
                 target_end = primercoords[2]-1
 
-                target_seq_ref=ref_dic[chrom][target_start:target_end]
+                target_seq_ref = ref_genome.get_sequence(
+                    chrom, target_start, target_end)
 
                 if strand=="bottom":
                     target_seq_stranded = reverse_complement(target_seq_ref)
