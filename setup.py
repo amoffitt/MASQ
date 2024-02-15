@@ -16,6 +16,7 @@ setuptools.setup(
     ],
     entry_points="""
     [console_scripts]
+    primer_table_to_sd_table=masq.primer_table_to_sd_table:main
 
     """,
     classifiers=[

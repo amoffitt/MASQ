@@ -14,6 +14,7 @@ dependencies:
   - r-cowplot
   - primer3
   - blat
+  - pandas
 
 channels:
   - conda-forge

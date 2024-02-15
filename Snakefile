@@ -117,8 +117,8 @@ rule convert_SNV_table:
         newtable="locus_seq_table.txt"
     params:
         ref_genome = config["ref_genome"]
-    script:
-        "scripts/primer_table_to_sd_table.py"
+    shell:
+        "primer_table_to_sd_table {input.oldtable} {output.newtable} {params.ref_genome}"
 
 
 ###############################################################################
