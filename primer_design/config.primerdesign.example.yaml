@@ -46,7 +46,7 @@ trinucleotide_file: "high_error_trinucleotides.txt"
 ################## Programs #################################
 # BLAT and PRIMER3 should be installed via conda or placed in path
 # Check that this path points to the primer3 configuration folder
-primer3_thermo_param_folder: "../MASQ/share/primer3/primer3_config/"
+primer3_thermo_param_folder: "primer3_config/"
 
 ################# Primer design parameters ##################
 # If snp passes on both strands, keep which one
