@@ -1,5 +1,6 @@
 #!/bin/bash
 
+pip install -e .
 
 ./prepare_example_references.sh
 
@@ -11,7 +12,7 @@ rm -rf .snakemake
 
 tar zxf example_outputs.tar.gz
 
-snakemake -j
+snakemake -j 5
 
 diff -r -x logs -x fastqc \
     example_outputs/test_example1 \
