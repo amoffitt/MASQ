@@ -15,6 +15,7 @@ dependencies:
   - primer3
   - blat
   - pandas
+  - loguru
 
 channels:
   - conda-forge

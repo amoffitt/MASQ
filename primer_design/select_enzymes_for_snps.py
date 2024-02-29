@@ -11,7 +11,14 @@ import yaml
 import datetime
 import pprint
 import pysam
+
+from loguru import logger
+
+from masq.primer_design.enzymes import load_enzyme_descriptors, \
+    process_enzyme_cut_sites
+
 from primer_design_functions import *
+
 
 ###############################################################################
 # Time entire script
@@ -39,73 +46,97 @@ enzyme_pos_fns = [os.path.join(enz_folder,x+"."+genomebuild+".sort.gz") for x in
 ###############################################################################
 # Enzyme cut site offsets and recognition sites
 # 1st column is enzyme name, 2nd column is motif, 3rd column is motif with cut, 4th column is cut offset
-cut_offsets=dict()
-motifs=dict()
-recogsites=dict()
 cut_site_file = config['cutsite_offset_file']
-with open(cut_site_file,'r') as f:
-   for line in f:
-        e=line.strip().split()[0]
-        motifs[e]=line.strip().split()[1]
-        recogsites[e]=line.strip().split()[2]
-        cut_offsets[e]=int(line.strip().split()[3])
+# cut_offsets=dict()
+# motifs=dict()
+# recogsites=dict()
+# with open(cut_site_file,'r') as f:
+#    for line in f:
+#         e=line.strip().split()[0]
+#         motifs[e]=line.strip().split()[1]
+#         recogsites[e]=line.strip().split()[2]
+#         cut_offsets[e]=int(line.strip().split()[3])
+
+enzyme_descriptors = load_enzyme_descriptors(cut_site_file, enzymes)
 
 ###############################################################################
 # Process enzyme cut sites into dictionary
 # Top level keys: enzymes; Next level keys: chromosome
-print("Loading enzyme cut site information"); start = time.time()
+print("Loading enzyme cut site information")
+start = time.time()
 cut_site_pickle_top = config['enzyme_top_pickle']
 cut_site_pickle_btm = config['enzyme_btm_pickle']
-reload_enzymes=False
+reload_enzymes = True
 sys.stdout.flush()
 
-if os.path.isfile(cut_site_pickle_top):
-    cut_sites_top = pickle.load(open(cut_site_pickle_top, 'rb'))
-    cut_sites_btm = pickle.load(open(cut_site_pickle_btm, 'rb'))
+# logger.info("try loading enzyme cut sites from pickle files")
 
-    for x in enzymes: # check that all of the enzymes are present in the pickle file
-        if ( (x not in cut_sites_top) or (x not in cut_sites_btm) ):
-            reload_enzymes=True
-            break
-else:
-    reload_enzymes=True
+# if os.path.exists(cut_site_pickle_top) and os.path.isfile(cut_site_pickle_top) \
+#         and os.path.exists(cut_site_pickle_btm) \
+#         and os.path.isfile(cut_site_pickle_btm):
+#     cut_sites_top = pickle.load(open(cut_site_pickle_top, 'rb'))
+#     cut_sites_btm = pickle.load(open(cut_site_pickle_btm, 'rb'))
+
+#     for x in enzymes:  # check that all of the enzymes are present in the pickle file
+#         if ( (x not in cut_sites_top) or (x not in cut_sites_btm) ):
+#             reload_enzymes = True
+#             break
+# else:
+#     reload_enzymes = True
+
+# logger.info("pickle files loaded")
 
 if reload_enzymes:
-    cut_sites_top=dict()
-    cut_sites_btm=dict()
-    for x in enzymes:
-        cut_sites_top[x]=dict()
-        cut_sites_btm[x]=dict()
-    # Loop over enzyme files and store cut site information
-    c=0
-    for e,efn in zip(enzymes, enzyme_pos_fns):
-        print(e)
-        print(efn)
-        sys.stdout.flush()
-        off_top=cut_offsets[e]
-        off_btm=len(motifs[e])-off_top
+    cut_sites_top, cut_sites_btm = process_enzyme_cut_sites(
+        [enzyme_descriptors[ename] for ename in enzymes],
+        enz_folder, genomebuild)
 
-        with gzip.open(efn,'rt') as f:
-            for line in f:
-                entries=line.strip().split()
-                chrom=entries[0];
-                pos_top=int(entries[1])+off_top
-                pos_btm=int(entries[1])+off_btm
+    # cut_sites_top = {}
+    # cut_sites_btm = {}
+    # for x in enzymes:
+    #     cut_sites_top[x]=dict()
+    #     cut_sites_btm[x]=dict()
+    # # Loop over enzyme files and store cut site information
+    # c = 0
+    # for ename, efn in zip(enzymes, enzyme_pos_fns):
+    #     print(ename)
+    #     print(efn)
+    #     sys.stdout.flush()
 
-                if chrom in cut_sites_top[e].keys():
-                    cut_sites_top[e][chrom].append(pos_top)
-                    cut_sites_btm[e][chrom].append(pos_btm)
-                else:
-                    cut_sites_top[e][chrom]=[pos_top]
-                    cut_sites_btm[e][chrom]=[pos_btm]
-                c=c+1
-                #if (c % 10000)==0:
-                #    print(tabprint([chrom,pos_top]))
+    #     edesc = enzyme_descriptors[ename]
+    #     off_top = edesc.cut_offset
+    #     off_btm = len(edesc.motif) - off_top
 
-        # Save to python file
-        pickle.dump(cut_sites_top, open(cut_site_pickle_top, 'wb'), pickle.HIGHEST_PROTOCOL)
-        pickle.dump(cut_sites_btm, open(cut_site_pickle_btm, 'wb'), pickle.HIGHEST_PROTOCOL)
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+    #     with gzip.open(efn, 'rt') as f:
+    #         for line in f:
+    #             entries = line.strip().split()
+    #             chrom = entries[0]
+    #             pos_top = int(entries[1]) + off_top
+    #             pos_btm = int(entries[1]) + off_btm
+
+    #             if chrom in cut_sites_top[ename].keys():
+    #                 cut_sites_top[ename][chrom].append(pos_top)
+    #                 cut_sites_btm[ename][chrom].append(pos_btm)
+    #             else:
+    #                 cut_sites_top[ename][chrom]=[pos_top]
+    #                 cut_sites_btm[ename][chrom]=[pos_btm]
+    #             c = c+1
+    #             #if (c % 10000)==0:
+    #             #    print(tabprint([chrom,pos_top]))
+
+    # Save to python file
+    # logger.info("saving enzyme cut sites to pickle files")
+    # pickle.dump(
+    #     cut_sites_top, open(cut_site_pickle_top, 'wb'),
+    #     pickle.HIGHEST_PROTOCOL)
+    # pickle.dump(
+    #     cut_sites_btm, open(cut_site_pickle_btm, 'wb'),
+    #     pickle.HIGHEST_PROTOCOL)
+    # logger.info("done saving enzyme cut sites to pickle files")
+
+end = time.time()
+print("Time elapsed: %0.2f" % (end-start))
+sys.stdout.flush()
 
 ###############################################################################
 # Load SNPs into dictionary with initial information
@@ -218,15 +249,15 @@ for s in snpdict:
             alt_context=seq_dic[chrom][pos-7:pos-1]+reverseComplement(alt)+seq_dic[chrom][pos:pos+6]
         print(ref_context)
         print(alt_context)
-        for e,m in motifs.items():
-            ref_hit = check_sequence_for_cut_site(ref_context,m)
-            alt_hit = check_sequence_for_cut_site(alt_context,m)
+        for ename, edesc in enzyme_descriptors.items():
+            ref_hit = check_sequence_for_cut_site(ref_context, edesc.motif)
+            alt_hit = check_sequence_for_cut_site(alt_context, edesc.motif)
             if (alt_hit and not ref_hit):
-                print("%s: mutation introduces cut site for %s, %s" % (s,e,m))
-                bad_enzyme_choices[s].append(e)
+                print("%s: mutation introduces cut site for %s, %s" % (s,ename, edesc))
+                bad_enzyme_choices[s].append(ename)
             if (ref_hit and not alt_hit):
-                print("%s: mutation removes cut site for %s, %s" % (s,e,m))
-                bad_enzyme_choices[s].append(e)
+                print("%s: mutation removes cut site for %s, %s" % (s,ename, edesc))
+                bad_enzyme_choices[s].append(ename)
 print("Bad enzyme choices due to cut sites introduced by mutations")
 print(bad_enzyme_choices)
 
@@ -596,7 +627,8 @@ for s in snpdict:
                         sel_enz=e
 
         snpdict[s]['enzyme']=sel_enz
-        snpdict[s]['enzyme_recog_site']=recogsites[sel_enz]
+        edesc = enzyme_descriptors[sel_enz]
+        snpdict[s]['enzyme_recog_site']=edesc.recognition_site
         if snpdict[s]['strand']=='top':
             snpdict[s]['nearest_upstream_cut']=min_cut
         else:
