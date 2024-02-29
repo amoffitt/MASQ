@@ -116,9 +116,9 @@ rule convert_SNV_table:
     output:
         newtable="locus_seq_table.txt"
     params:
-        ref_genome = config["ref_genome"]
+        ref_genome = config["ref_genome_fa"]
     shell:
-        "primer_table_to_sd_table {input.oldtable} {output.newtable} {params.ref_genome}"
+        "masq_primer_table_to_sd_table {input.oldtable} {output.newtable} {params.ref_genome}"
 
 
 ###############################################################################
