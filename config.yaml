@@ -28,7 +28,8 @@ fastq_dirs:
 # BAM must be indexed
 WGS_bam: "example_inputs/example_wgs.bam"
 WGS_name: "test_bam"
-WGS_ref: "references/hg19/hg19.fa"
+# WGS_ref: "references/hg19/hg19.fa"
+WGS_ref: "references/hg19/hg19.seq_dic.cpickle"
 
 # Sequence parameters
 # remove reads shorter than this
@@ -75,4 +76,5 @@ quick_run_reads: 100000
 # Genome reference files
 # See make_ref_genome_pickle.py to convert FASTA to pickle
 ref_genome: "references/hg19/hg19.seq_dic.cpickle"
+ref_genome_fa: "references/hg19/hg19.fa"
 
