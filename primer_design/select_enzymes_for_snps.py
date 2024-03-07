@@ -16,6 +16,9 @@ from loguru import logger
 
 from masq.primer_design.enzymes import load_enzyme_descriptors, \
     process_enzyme_cut_sites
+from masq.primer_design.snp import process_snps, print_snp_dict
+
+from masq.utils.reference_genome import ReferenceGenome
 
 from primer_design_functions import *
 
@@ -35,6 +38,9 @@ sys.stdout.flush()
 print('loading reference genome pickle')
 seq_pickle = config['ref_pickle']
 seq_dic = pickle.load(open(seq_pickle, 'rb'))
+ref_genome = ReferenceGenome(config['ref_genome'])
+ref_genome.open()
+
 
 ###############################################################################
 # Enzyme files
@@ -64,75 +70,11 @@ enzyme_descriptors = load_enzyme_descriptors(cut_site_file, enzymes)
 # Top level keys: enzymes; Next level keys: chromosome
 print("Loading enzyme cut site information")
 start = time.time()
-cut_site_pickle_top = config['enzyme_top_pickle']
-cut_site_pickle_btm = config['enzyme_btm_pickle']
-reload_enzymes = True
 sys.stdout.flush()
 
-# logger.info("try loading enzyme cut sites from pickle files")
-
-# if os.path.exists(cut_site_pickle_top) and os.path.isfile(cut_site_pickle_top) \
-#         and os.path.exists(cut_site_pickle_btm) \
-#         and os.path.isfile(cut_site_pickle_btm):
-#     cut_sites_top = pickle.load(open(cut_site_pickle_top, 'rb'))
-#     cut_sites_btm = pickle.load(open(cut_site_pickle_btm, 'rb'))
-
-#     for x in enzymes:  # check that all of the enzymes are present in the pickle file
-#         if ( (x not in cut_sites_top) or (x not in cut_sites_btm) ):
-#             reload_enzymes = True
-#             break
-# else:
-#     reload_enzymes = True
-
-# logger.info("pickle files loaded")
-
-if reload_enzymes:
-    cut_sites_top, cut_sites_btm = process_enzyme_cut_sites(
-        [enzyme_descriptors[ename] for ename in enzymes],
-        enz_folder, genomebuild)
-
-    # cut_sites_top = {}
-    # cut_sites_btm = {}
-    # for x in enzymes:
-    #     cut_sites_top[x]=dict()
-    #     cut_sites_btm[x]=dict()
-    # # Loop over enzyme files and store cut site information
-    # c = 0
-    # for ename, efn in zip(enzymes, enzyme_pos_fns):
-    #     print(ename)
-    #     print(efn)
-    #     sys.stdout.flush()
-
-    #     edesc = enzyme_descriptors[ename]
-    #     off_top = edesc.cut_offset
-    #     off_btm = len(edesc.motif) - off_top
-
-    #     with gzip.open(efn, 'rt') as f:
-    #         for line in f:
-    #             entries = line.strip().split()
-    #             chrom = entries[0]
-    #             pos_top = int(entries[1]) + off_top
-    #             pos_btm = int(entries[1]) + off_btm
-
-    #             if chrom in cut_sites_top[ename].keys():
-    #                 cut_sites_top[ename][chrom].append(pos_top)
-    #                 cut_sites_btm[ename][chrom].append(pos_btm)
-    #             else:
-    #                 cut_sites_top[ename][chrom]=[pos_top]
-    #                 cut_sites_btm[ename][chrom]=[pos_btm]
-    #             c = c+1
-    #             #if (c % 10000)==0:
-    #             #    print(tabprint([chrom,pos_top]))
-
-    # Save to python file
-    # logger.info("saving enzyme cut sites to pickle files")
-    # pickle.dump(
-    #     cut_sites_top, open(cut_site_pickle_top, 'wb'),
-    #     pickle.HIGHEST_PROTOCOL)
-    # pickle.dump(
-    #     cut_sites_btm, open(cut_site_pickle_btm, 'wb'),
-    #     pickle.HIGHEST_PROTOCOL)
-    # logger.info("done saving enzyme cut sites to pickle files")
+cut_sites_top, cut_sites_btm = process_enzyme_cut_sites(
+    [enzyme_descriptors[ename] for ename in enzymes],
+    enz_folder, genomebuild)
 
 end = time.time()
 print("Time elapsed: %0.2f" % (end-start))
@@ -144,67 +86,11 @@ sys.stdout.flush()
 # If strand is included - ref and alt are expected to be flipped for bottom
 print("Loading SNP info"); start = time.time()
 snp_file = config['variant_file']
-snpdict=dict()
+snpdict = process_snps(snp_file, ref_genome)
+print_snp_dict(snpdict, False)
 
-with open(snp_file,'rt') as f:
-    for line in f:
-        entries=line.strip().split()
-        chrom=entries[0]
-        pos=int(entries[1])
-        ref=entries[2]
-        alt=entries[3]
-        try:
-            strand=entries[4]
-        except:
-            strand=''
-
-        # check reference base
-        if strand=='bottom':
-            seqref=reverseComplement(seq_dic[chrom][pos-1])
-        else: # top or no strand provided
-            seqref=seq_dic[chrom][pos-1]
-        if seqref is not ref:
-            print("Error: reference base (and strand) provided do not match reference seq dictionary")
-            print("%s: %d, %s" % (chrom,pos,strand))
-            sys.exit()
-
-        if strand=='top':
-            ref_trinuc=seq_dic[chrom][pos-2:pos+1]
-            alt_trinuc=ref_trinuc[0]+alt+ref_trinuc[2]
-
-            snpid='_'.join([chrom,str(pos),strand])
-            snpdict[snpid]=dict()
-            initial_snp_dict(snpdict,snpid,chrom,pos,strand,ref,alt,ref_trinuc,alt_trinuc)
-
-        elif strand=='bottom':
-            ref_trinuc=reverseComplement(seq_dic[chrom][pos-2:pos+1])
-            alt_trinuc=ref_trinuc[0]+alt+ref_trinuc[2]
-
-            snpid='_'.join([chrom,str(pos),strand])
-            snpdict[snpid]=dict()
-            initial_snp_dict(snpdict,snpid,chrom,pos,strand,ref,alt,ref_trinuc,alt_trinuc)
-        else:
-            ref_trinuc_fwd=seq_dic[chrom][pos-2:pos+1]
-            alt_trinuc_fwd=ref_trinuc_fwd[0]+alt+ref_trinuc_fwd[2]
-
-            ref_trinuc_rev=reverseComplement(seq_dic[chrom][pos-2:pos+1])
-            alt_trinuc_rev=ref_trinuc_rev[0]+reverseComplement(alt)+ref_trinuc_rev[2]
-
-            ref_rev=reverseComplement(alt)
-            alt_rev=reverseComplement(alt)
-
-            snpid='_'.join([chrom,str(pos),'top'])
-            snpdict[snpid]=dict()
-            strand='top'
-            initial_snp_dict(snpdict,snpid,chrom,pos,strand,ref,alt,ref_trinuc_fwd,alt_trinuc_fwd)
-
-            snpid='_'.join([chrom,str(pos),'bottom'])
-            snpdict[snpid]=dict()
-            strand='bottom'
-            initial_snp_dict(snpdict,snpid,chrom,pos,strand,ref_rev,alt_rev,ref_trinuc_rev,alt_trinuc_rev)
-
-print_snp_dict(snpdict,False)
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+end = time.time()
+print("Time elapsed: %0.2f" % (end-start))
 sys.stdout.flush()
 
 ###############################################################################
