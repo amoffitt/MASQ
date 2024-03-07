@@ -19,6 +19,12 @@ vi config.yaml
 
 # Execute MASQ analysis workflow (in dry-run mode)
 snakemake -n
+
+# To run the 'standard PCR' example, rename config.standardPCR.yaml to config.yaml
+cp config.yaml config.masq.yaml 
+cp config.standardPCR.yaml config.yaml
+snakemake 
+
 ```
 
 ### MASQ Analysis
