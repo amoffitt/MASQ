@@ -38,6 +38,7 @@ enzyme_btm_pickle: "enzyme_cut_sites/enzyme_cut_sites.btm.pickle"
 
 # Reference genome
 ref_pickle: "../references/hg19/hg19.seq_dic.cpickle"
+ref_genome: "../references/hg19/hg19.fa"
 ref_fa: "../references/hg19/hg19.fa"
 
 # Trinucleotides to not include

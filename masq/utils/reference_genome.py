@@ -71,7 +71,9 @@ class ReferenceGenome:
             raise IOError(f"reference genome is not open: {self.filename}")
         return list(self._genome_index.keys())
 
-    def get_sequence(self, chrom: str, start: int, stop: int) -> str:
+    def get_sequence(
+        self, chrom: str, start: int, stop: int
+    ) -> str:
         """Returns a sequence from the reference genome.
 
         Returns a subsequence from the reference genome at chromosome `chrom`

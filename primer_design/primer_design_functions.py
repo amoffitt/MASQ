@@ -139,30 +139,30 @@ def snps_or_indels_in_region(bamfiles,regionstring,seq_dic,basequal_cutoff=28,va
 
 
 
-def initial_snp_dict(snpdict,snpid,chrom,pos,strand,ref,alt,reftrinuc,alttrinuc):
-    snpdict[snpid]['chrom']=chrom
-    snpdict[snpid]['pos']=pos
-    snpdict[snpid]['strand']=strand
-    snpdict[snpid]['ref']=ref
-    snpdict[snpid]['alt']=alt
-    snpdict[snpid]['ref_trinuc']=reftrinuc
-    snpdict[snpid]['alt_trinuc']=alttrinuc
-    snpdict[snpid]['status']='pass'
+# def initial_snp_dict(snpdict,snpid,chrom,pos,strand,ref,alt,reftrinuc,alttrinuc):
+#     snpdict[snpid]['chrom']=chrom
+#     snpdict[snpid]['pos']=pos
+#     snpdict[snpid]['strand']=strand
+#     snpdict[snpid]['ref']=ref
+#     snpdict[snpid]['alt']=alt
+#     snpdict[snpid]['ref_trinuc']=reftrinuc
+#     snpdict[snpid]['alt_trinuc']=alttrinuc
+#     snpdict[snpid]['status']='pass'
 
-def print_snp_dict(snpdict,passonly):
-    for snpid,info in snpdict.items():
-        if (snpdict[snpid]['status'])=='pass':
-            print(snpid)
-            for key,val in info.items():
-                print("%s: %s" % (str(key),str(val)))
-            print("\n######################\n")
-        else:
-            if not passonly:
-                print(snpid)
-                for key,val in info.items():
-                    print("%s: %s" % (str(key),str(val)))
-                print("\n######################\n")
-    sys.stdout.flush()
+# def print_snp_dict(snpdict,passonly):
+#     for snpid,info in snpdict.items():
+#         if (snpdict[snpid]['status'])=='pass':
+#             print(snpid)
+#             for key,val in info.items():
+#                 print("%s: %s" % (str(key),str(val)))
+#             print("\n######################\n")
+#         else:
+#             if not passonly:
+#                 print(snpid)
+#                 for key,val in info.items():
+#                     print("%s: %s" % (str(key),str(val)))
+#                 print("\n######################\n")
+#     sys.stdout.flush()
 
 
 def write_primer3_input_file(fn,snpid,templateseq,strand,dist,config):
