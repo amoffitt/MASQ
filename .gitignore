@@ -28,3 +28,4 @@ primer_design/enzyme_cut_sites/*.pickle
 primer_design/log.primerdesign*
 
 *.seq_dic.cpickle
+*.log

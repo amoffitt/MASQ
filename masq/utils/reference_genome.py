@@ -41,6 +41,7 @@ class ReferenceGenome:
                     "seq_line_length": int(parts[3]),
                     "line_length": int(parts[4]),
                 }
+                self.chromosomes[parts[0]] = int(parts[1])
 
     def is_open(self) -> bool:
         return self._genome_file is not None

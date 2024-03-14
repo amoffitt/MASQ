@@ -43,7 +43,7 @@ ref_genome: "../references/hg19/hg19.fa"
 ref_fa: "../references/hg19/hg19.fa"
 
 # Trinucleotides to not include
-trinucleotide_file: "high_error_trinucleotides.txt"
+trinucleotide_file: "high_error_trinucleotides.tsv"
 
 ################## Programs #################################
 # BLAT and PRIMER3 should be installed via conda or placed in path
