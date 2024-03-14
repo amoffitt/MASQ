@@ -1,22 +1,19 @@
 import numpy as np
 import sys
 import os
-import gzip
 import pickle
 import subprocess
 import time
-import re
-from collections import Counter, defaultdict
+from collections import Counter
 import yaml
 import datetime
 import pprint
-import pysam
-
-from loguru import logger
 
 from masq.primer_design.enzymes import load_enzyme_descriptors, \
     process_enzyme_cut_sites
-from masq.primer_design.snp import process_snps, print_snp_dict
+from masq.primer_design.snp import process_snps, print_snp_dict, \
+    filter_high_error_trinucleotides, check_snps_for_enzyme_cut_sites, \
+    snps_or_indels_in_region, check_snps_in_target_region_for_cut_sites
 
 from masq.utils.reference_genome import ReferenceGenome
 
@@ -96,110 +93,32 @@ sys.stdout.flush()
 ###############################################################################
 # Load trinucleotides with high error rates
 if config['filter_trinucleotides']:
-    high_error_trinucs = list()
-    with open(config['trinucleotide_file']) as f:
-        for line in f:
-            reftrinuc = line.strip().split()[0]
-            alttrinuc = line.strip().split()[1]
-            high_error_trinucs.append((reftrinuc,alttrinuc))
-###############################################################################
-# Filter snps against trinucleotides
-if config['filter_trinucleotides']:
-    print("Filtering on Ref/Alt Trinucleotides")
-    for s in snpdict:
-        if snpdict[s]['status'] is 'pass':
-            trinucs = (snpdict[s]['ref_trinuc'], snpdict[s]['alt_trinuc'])
-            print(s)
-            print(trinucs)
-            if trinucs in high_error_trinucs:
-                print("found in high error list")
-                snpdict[s]['status']='drop'
-                snpdict[s]['drop_reason']='high_error_trinuc'
+    snpdict = filter_high_error_trinucleotides(
+        config['trinucleotide_file'], snpdict)
 
 ###############################################################################
 # Check mutation changes against enzyme cut sites to make list of bad enzymes per mutation
 # Recognition sites only need checking in top strand - if they are there, they are in bottom too
-print("Checking mutations for cut sites")
-bad_enzyme_choices=defaultdict(list)
-for s in snpdict:
-    if snpdict[s]['status'] is 'pass':
-        print(s)
-        chrom = snpdict[s]['chrom']
-        pos = snpdict[s]['pos']
-        alt = snpdict[s]['alt']
-        strand  = snpdict[s]['strand']
-        ref_context=seq_dic[chrom][pos-7:pos+6]
-        if strand=='top':
-            alt_context=seq_dic[chrom][pos-7:pos-1]+alt+seq_dic[chrom][pos:pos+6]
-        else:
-            alt_context=seq_dic[chrom][pos-7:pos-1]+reverseComplement(alt)+seq_dic[chrom][pos:pos+6]
-        print(ref_context)
-        print(alt_context)
-        for ename, edesc in enzyme_descriptors.items():
-            ref_hit = check_sequence_for_cut_site(ref_context, edesc.motif)
-            alt_hit = check_sequence_for_cut_site(alt_context, edesc.motif)
-            if (alt_hit and not ref_hit):
-                print("%s: mutation introduces cut site for %s, %s" % (s,ename, edesc))
-                bad_enzyme_choices[s].append(ename)
-            if (ref_hit and not alt_hit):
-                print("%s: mutation removes cut site for %s, %s" % (s,ename, edesc))
-                bad_enzyme_choices[s].append(ename)
-print("Bad enzyme choices due to cut sites introduced by mutations")
-print(bad_enzyme_choices)
+print("Checking mutations for enzyme cut sites")
+bad_enzyme_choices = check_snps_for_enzyme_cut_sites(
+    snpdict, enzyme_descriptors, ref_genome
+)
 
 ###############################################################################
 # Check snps in target region for introducing cut sites
 # Optionally dropping snps with other snps in nearby cut sites
 print("Checking target region for SNPs and cut sites")
-bam=config['wgs_bam'] # Can be single string or list of strings ! (must have same reference)
-bam_ref_dic = pickle.load(open(config['wgs_ref'], 'rb'))
-for s in snpdict:
-    if snpdict[s]['status'] is 'pass':
-        target_pos = snpdict[s]['pos']
-        chrom=snpdict[s]['chrom']
-        strand  = snpdict[s]['strand']
-        if strand=='top':
-            fulltargetstring="%s:%d-%d" % (snpdict[s]['chrom'],max(target_pos+config['frag_end_range'][0],1),target_pos+config['good_cut_range'][1])
-        else:
-            fulltargetstring="%s:%d-%d" % (snpdict[s]['chrom'],max(target_pos-config['good_cut_range'][1],1),target_pos-config['frag_end_range'][0])
-        print(fulltargetstring)
-        [snp_positions,seq_positions,snp_alt_bases,region_ref_seq] = snps_or_indels_in_region(bam,fulltargetstring,bam_ref_dic,basequal_cutoff=config['basequal_cutoff'],vaf_cutoff=config['vaf_cutoff'],indelaf_cutoff=config['indelaf_cutoff'],var_count_cutoff=config['var_count_cutoff'],indel_count_cutoff=config['indel_count_cutoff'])
-        non_target_snps = [x for x in snp_positions if x!=target_pos]
+# Can be single string or list of strings ! (must have same reference)
+bam = config['wgs_bam']
 
-        print(s)
-        print(bam)
-        print(fulltargetstring)
-        print(snp_positions)
-        print(snp_alt_bases)
-
-        # Save indel positions to check and warn later
-        snpdict[s]['indel_positions'] = [x for x,y in zip(snp_positions,snp_alt_bases) if y=='I' ]
-        if len(snpdict[s]['indel_positions'])>0:
-            print("Indel positions: %s" % s)
-            print(snpdict[s]['indel_positions'])
-
-        if config['drop_snps_in_full_target']:
-            if len(non_target_snps)>0:
-                print("%s: found SNPs in nearby region" % s)
-                snpdict[s]['status']='drop'
-                snpdict[s]['drop_reason']='snps_in_target_region'
-                continue
-
-        if config['drop_indel_in_full_target']:
-            if 'I' in snp_alt_bases:
-                snpdict[s]['status']='drop'
-                snpdict[s]['drop_reason']='indel_in_target_region'
-                continue
-        else:
-            for x,y in zip(non_target_snps,snp_alt_bases):
-                ref_context=seq_dic[chrom][x-7:x+6]
-                alt_context=seq_dic[chrom][x-7:x-1]+y+seq_dic[chrom][x:x+6]
-                if (alt_hit and not ref_hit):
-                    print("%s: SNP in target region introduces cut site for %s, %s" % (s,e,m))
-                    bad_enzyme_choices[s].append(e)
-                if (ref_hit and not alt_hit):
-                    print("%s: SNP in target region removes cut site for %s, %s" % (s,e,m))
-                    bad_enzyme_choices[s].append(e)
+bad_enzyme_choices = check_snps_in_target_region_for_cut_sites(
+    snpdict,
+    enzyme_descriptors,
+    ref_genome,
+    bam,
+    config,
+    bad_enzyme_choices
+)
 print("Bad enzyme choices due to cut sites introduced by SNPs")
 print(bad_enzyme_choices)
 
@@ -737,8 +656,24 @@ for snpid,counts in blat_hits.items():
         # check perfect pairs for snps in primers before skipping next step
         for p in ps:
             (primerstringL,primerstringR)=get_primer_coordinates(p,snpid,primer3results,snpdict)
-            [snp_positionsL,seq_positions,snp_alt_bases,region_ref_seq] = snps_or_indels_in_region(bam,primerstringL,bam_ref_dic,basequal_cutoff=config['basequal_cutoff'],vaf_cutoff=config['vaf_cutoff'],indelaf_cutoff=config['indelaf_cutoff'],var_count_cutoff=config['var_count_cutoff'],indel_count_cutoff=config['indel_count_cutoff'])
-            [snp_positionsR,seq_positions,snp_alt_bases,region_ref_seq] = snps_or_indels_in_region(bam,primerstringR,bam_ref_dic,basequal_cutoff=config['basequal_cutoff'],vaf_cutoff=config['vaf_cutoff'],indelaf_cutoff=config['indelaf_cutoff'],var_count_cutoff=config['var_count_cutoff'],indel_count_cutoff=config['indel_count_cutoff'])
+            [snp_positionsL, seq_positions, snp_alt_bases, region_ref_seq] = \
+                snps_or_indels_in_region(
+                    bam, primerstringL,
+                    ref_genome,
+                    basequal_cutoff=config['basequal_cutoff'],
+                    vaf_cutoff=config['vaf_cutoff'],
+                    indelaf_cutoff=config['indelaf_cutoff'],
+                    var_count_cutoff=config['var_count_cutoff'],
+                    indel_count_cutoff=config['indel_count_cutoff'])
+            [snp_positionsR, seq_positions, snp_alt_bases, region_ref_seq] = \
+                snps_or_indels_in_region(
+                    bam, primerstringR,
+                    ref_genome,
+                    basequal_cutoff=config['basequal_cutoff'],
+                    vaf_cutoff=config['vaf_cutoff'],
+                    indelaf_cutoff=config['indelaf_cutoff'],
+                    var_count_cutoff=config['var_count_cutoff'],
+                    indel_count_cutoff=config['indel_count_cutoff'])
             if (len(snp_positionsL)>0) or (len(snp_positionsR)>0):
                 valid_primer_pairs[snpid].remove(p)
                 print("Found SNP in primer pair: %s" % p)
@@ -777,8 +712,24 @@ for snpid,counts in blat_hits.items():
         # Check valid primer pairs for snps in primer, drop if SNP in primer
         for p in ps:
             (primerstringL,primerstringR)=get_primer_coordinates(p,snpid,primer3results,snpdict)
-            [snp_positionsL,seq_positions,snp_alt_bases,region_ref_seq] = snps_or_indels_in_region(bam,primerstringL,bam_ref_dic,basequal_cutoff=config['basequal_cutoff'],vaf_cutoff=config['vaf_cutoff'],indelaf_cutoff=config['indelaf_cutoff'],var_count_cutoff=config['var_count_cutoff'],indel_count_cutoff=config['indel_count_cutoff'])
-            [snp_positionsR,seq_positions,snp_alt_bases,region_ref_seq] = snps_or_indels_in_region(bam,primerstringR,bam_ref_dic,basequal_cutoff=config['basequal_cutoff'],vaf_cutoff=config['vaf_cutoff'],indelaf_cutoff=config['indelaf_cutoff'],var_count_cutoff=config['var_count_cutoff'],indel_count_cutoff=config['indel_count_cutoff'])
+            [snp_positionsL, seq_positions, snp_alt_bases, region_ref_seq] = \
+                snps_or_indels_in_region(
+                    bam, primerstringL,
+                    ref_genome,
+                    basequal_cutoff=config['basequal_cutoff'],
+                    vaf_cutoff=config['vaf_cutoff'],
+                    indelaf_cutoff=config['indelaf_cutoff'],
+                    var_count_cutoff=config['var_count_cutoff'],
+                    indel_count_cutoff=config['indel_count_cutoff'])
+            [snp_positionsR, seq_positions, snp_alt_bases, region_ref_seq] = \
+                snps_or_indels_in_region(
+                    bam, primerstringR,
+                    ref_genome,
+                    basequal_cutoff=config['basequal_cutoff'],
+                    vaf_cutoff=config['vaf_cutoff'],
+                    indelaf_cutoff=config['indelaf_cutoff'],
+                    var_count_cutoff=config['var_count_cutoff'],
+                    indel_count_cutoff=config['indel_count_cutoff'])
             if (len(snp_positionsL)>0) or (len(snp_positionsR)>0):
                 print("Found SNP in primer pair: %s" % p)
                 print("Left primer: %s" % primerstringL)
