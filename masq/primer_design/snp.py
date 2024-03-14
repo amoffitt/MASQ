@@ -395,20 +395,16 @@ def check_snps_in_target_region_for_cut_sites(
         chrom = snpdict[s]['chrom']
         strand = snpdict[s]['strand']
         if strand == 'top':
-            fulltargetstring = "%s:%d-%d" % (
-                snpdict[s]['chrom'],
-                max(target_pos + config['frag_end_range'][0], 1),
-                target_pos+config['good_cut_range'][1]
-            )
+            target_start = max(target_pos + config['frag_end_range'][0], 1)
+            target_end = target_pos + config['good_cut_range'][1]
         else:
-            fulltargetstring = "%s:%d-%d" % (
-                snpdict[s]['chrom'],
-                max(target_pos - config['good_cut_range'][1], 1),
-                target_pos-config['frag_end_range'][0])
-        print(fulltargetstring)
+            target_start = max(target_pos - config['good_cut_range'][1], 1)
+            target_end = target_pos - config['frag_end_range'][0]
+        target_region = f"{chrom}:{target_start}-{target_end}"
+
         [snp_positions, _seq_positions, snp_alt_bases, _region_ref_seq] = \
             snps_or_indels_in_region(
-                bamfiles, fulltargetstring,
+                bamfiles, target_region,
                 ref_genome,
                 basequal_cutoff=config['basequal_cutoff'],
                 vaf_cutoff=config['vaf_cutoff'],
