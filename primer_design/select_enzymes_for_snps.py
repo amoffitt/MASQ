@@ -8,6 +8,7 @@ from collections import Counter
 import yaml
 import datetime
 import pprint
+from typing import Any
 
 from masq.primer_design.enzymes import load_enzyme_descriptors, \
     process_enzyme_cut_sites
@@ -22,12 +23,12 @@ from primer_design_functions import *
 
 ###############################################################################
 # Time entire script
-start0=time.time()
+start0 = time.time()
 
 ###############################################################################
 # Load config file as first command line argument
-configfile=sys.argv[1]
-config=yaml.load(open(configfile),Loader=yaml.SafeLoader)
+configfile = sys.argv[1]
+config = yaml.load(open(configfile), Loader=yaml.SafeLoader)
 pprint.pprint(config)
 sys.stdout.flush()
 ###############################################################################
@@ -41,25 +42,18 @@ ref_genome.open()
 
 ###############################################################################
 # Enzyme files
-enz_folder= config['folder_with_cut_site_files']
-enzymes= config['enzyme_list']
-genomebuild=config["genomebuildforcutsites"]
-enzyme_pos_fns = [os.path.join(enz_folder,x+"."+genomebuild+".sort.gz") for x in enzymes]
+enz_folder = config['folder_with_cut_site_files']
+enzymes = config['enzyme_list']
+genomebuild = config["genomebuildforcutsites"]
+enzyme_pos_fns = [
+    os.path.join(enz_folder, x + "." + genomebuild+".sort.gz")
+    for x in enzymes]
 
 ###############################################################################
 # Enzyme cut site offsets and recognition sites
-# 1st column is enzyme name, 2nd column is motif, 3rd column is motif with cut, 4th column is cut offset
+# 1st column is enzyme name, 2nd column is motif, 3rd column is motif with cut,
+# 4th column is cut offset
 cut_site_file = config['cutsite_offset_file']
-# cut_offsets=dict()
-# motifs=dict()
-# recogsites=dict()
-# with open(cut_site_file,'r') as f:
-#    for line in f:
-#         e=line.strip().split()[0]
-#         motifs[e]=line.strip().split()[1]
-#         recogsites[e]=line.strip().split()[2]
-#         cut_offsets[e]=int(line.strip().split()[3])
-
 enzyme_descriptors = load_enzyme_descriptors(cut_site_file, enzymes)
 
 ###############################################################################
@@ -81,7 +75,8 @@ sys.stdout.flush()
 # Load SNPs into dictionary with initial information
 # Chrom, pos, ref, alt, strand (optional: top or bottom)
 # If strand is included - ref and alt are expected to be flipped for bottom
-print("Loading SNP info"); start = time.time()
+print("Loading SNP info")
+start = time.time()
 snp_file = config['variant_file']
 snpdict = process_snps(snp_file, ref_genome)
 print_snp_dict(snpdict, False)
@@ -97,8 +92,10 @@ if config['filter_trinucleotides']:
         config['trinucleotide_file'], snpdict)
 
 ###############################################################################
-# Check mutation changes against enzyme cut sites to make list of bad enzymes per mutation
-# Recognition sites only need checking in top strand - if they are there, they are in bottom too
+# Check mutation changes against enzyme cut sites to make list of bad enzymes
+# per mutation
+# Recognition sites only need checking in top strand - if they are there,
+# they are in bottom too
 print("Checking mutations for enzyme cut sites")
 bad_enzyme_choices = check_snps_for_enzyme_cut_sites(
     snpdict, enzyme_descriptors, ref_genome
@@ -124,96 +121,134 @@ print(bad_enzyme_choices)
 
 ###############################################################################
 # Current available SNPs from previous filtering
-pass_snpids= [x for x in snpdict.keys() if snpdict[x]['status']=='pass']
-snp_chrom=[snpdict[x]['chrom'] for x in pass_snpids]
-snp_pos=[snpdict[x]['pos'] for x in pass_snpids]
-snp_strand=[snpdict[x]['strand'] for x in pass_snpids]
+pass_snpids = [x for x in snpdict.keys() if snpdict[x]['status'] == 'pass']
+snp_chrom = [snpdict[x]['chrom'] for x in pass_snpids]
+snp_pos = [snpdict[x]['pos'] for x in pass_snpids]
+snp_strand = [snpdict[x]['strand'] for x in pass_snpids]
+
+pass_snpdict = {s: d for s, d in snpdict.items() if d['status'] == 'pass'}
 
 print("SNP DICT BEFORE ENZYME SELECTION")
 for s in snpdict:
-    if snpdict[s]['status']=='drop':
+    if snpdict[s]['status'] == 'drop':
         print(s)
         print(snpdict[s]['drop_reason'])
 
 # Make dictionaries of good and bad cuts for each enzyme/snp pair
-print("Idenfying good and bad cut sites for each enzyme-snp pair"); start = time.time()
+print("Idenfying good and bad cut sites for each enzyme-snp pair")
+start = time.time()
 sys.stdout.flush()
-good_cuts=dict()
-bad_cuts=dict()
-fragend_cuts=dict()
+
+good_cuts: dict[str, dict[str, Any]] = {}
+bad_cuts: dict[str, dict[str, Any]] = {}
+fragend_cuts: dict[str, dict[str, Any]] = {}
 for e in enzymes:
-    good_cuts[e]=dict()
-    bad_cuts[e]=dict()
-    fragend_cuts[e]=dict()
+    good_cuts[e] = {}
+    bad_cuts[e] = {}
+    fragend_cuts[e] = {}
 
 # Keep track if SNP has any possible enzymes with good cuts / no bad cuts
-possible_enzyme_match_found = dict()
+possible_enzyme_match_found = {}
 
 for e in enzymes:
     print(e)
     sys.stdout.flush()
-    for chrom,pos,strand,snpid in zip(snp_chrom,snp_pos,snp_strand,pass_snpids):
-        print("Collecting cut sites. Enzyme: %s. SNP %s" % (e,snpid))
+    for chrom, pos, strand, snpid in zip(
+            snp_chrom, snp_pos, snp_strand, pass_snpids):
+        print("Collecting cut sites. Enzyme: %s. SNP %s" % (e, snpid))
         if chrom in cut_sites_top[e].keys():
             x_top = np.array(cut_sites_top[e][chrom])
             x_btm = np.array(cut_sites_btm[e][chrom])
 
-            if strand=='top':
+            if strand == 'top':
                 # Intervals are all closed intervals, not overlapping
-                bad_range = ( pos + int(config['bad_cut_range'][0]) , pos + int(config['bad_cut_range'][1]) )
-                good_range = ( pos + int(config['good_cut_range'][0]) , pos + int(config['good_cut_range'][1]) )
-                fragend_range = ( pos + int(config['frag_end_range'][0]) , pos + int(config['frag_end_range'][1]) )
+                bad_range = (
+                    pos + int(config['bad_cut_range'][0]),
+                    pos + int(config['bad_cut_range'][1])
+                )
+                good_range = (
+                    pos + int(config['good_cut_range'][0]),
+                    pos + int(config['good_cut_range'][1])
+                )
+                fragend_range = (
+                    pos + int(config['frag_end_range'][0]),
+                    pos + int(config['frag_end_range'][1])
+                )
 
                 print("Ranges:")
                 print(good_range)
                 print(bad_range)
 
-                bad_list = x_top[((x_top>=bad_range[0]) & (x_top<=bad_range[1]))]
-                good_list = x_top[((x_top>=good_range[0]) & (x_top<=good_range[1]))]
-                fragend_list = x_btm[((x_btm>=fragend_range[0]) & (x_btm<=fragend_range[1]))] 
+                bad_list = x_top[
+                    ((x_top >= bad_range[0]) & (x_top <= bad_range[1]))
+                ]
+                good_list = x_top[
+                    ((x_top >= good_range[0]) & (x_top <= good_range[1]))
+                ]
+                fragend_list = x_btm[
+                    ((x_btm >= fragend_range[0]) & (x_btm <= fragend_range[1]))
+                ]
 
                 print("Cuts in range:")
                 print(good_list)
                 print(bad_list)
 
             else:
-                bad_range = ( pos - int(config['bad_cut_range'][1]) , pos - int(config['bad_cut_range'][0]) )
-                good_range = ( pos - int(config['good_cut_range'][1]) , pos - int(config['good_cut_range'][0]) )
-                fragend_range = ( pos - int(config['frag_end_range'][1]) , pos - int(config['frag_end_range'][0]) )
+                bad_range = (
+                    pos - int(config['bad_cut_range'][1]),
+                    pos - int(config['bad_cut_range'][0])
+                )
+                good_range = (
+                    pos - int(config['good_cut_range'][1]),
+                    pos - int(config['good_cut_range'][0])
+                )
+                fragend_range = (
+                    pos - int(config['frag_end_range'][1]),
+                    pos - int(config['frag_end_range'][0])
+                )
 
                 print("Ranges:")
                 print(good_range)
                 print(bad_range)
 
-                bad_list = x_btm[((x_btm>=bad_range[0]) & (x_btm<=bad_range[1]))] 
-                good_list = x_btm[((x_btm>=good_range[0]) & (x_btm<=good_range[1]))]
-                fragend_list = x_top[((x_top>=fragend_range[0]) & (x_top<=fragend_range[1]))]
+                bad_list = x_btm[
+                    ((x_btm >= bad_range[0]) & (x_btm <= bad_range[1]))
+                ]
+                good_list = x_btm[
+                    ((x_btm >= good_range[0]) & (x_btm <= good_range[1]))
+                ]
+                fragend_list = x_top[
+                    ((x_top >= fragend_range[0]) & (x_top <= fragend_range[1]))
+                ]
 
                 print("Cuts in range:")
                 print(good_list)
                 print(bad_list)
 
-            good_cuts[e][snpid]=good_list
-            bad_cuts[e][snpid]=bad_list
-            fragend_cuts[e][snpid]=fragend_list
+            good_cuts[e][snpid] = good_list
+            bad_cuts[e][snpid] = bad_list
+            fragend_cuts[e][snpid] = fragend_list
 
-            if ( (len(good_list)>0) and (len(bad_list)==0) ):
+            if ((len(good_list) > 0) and (len(bad_list) == 0)):
                 print("possible match found: %s" % snpid)
-                possible_enzyme_match_found[snpid]=1
+                possible_enzyme_match_found[snpid] = 1
+
+        else:
+            # no cuts on that chromosome
+            good_cuts[e][snpid] = np.array([])
+            bad_cuts[e][snpid] = np.array([])
+            fragend_cuts[e][snpid] = np.array([])
 
 
-        else: # no cuts on that chromosome
-            good_cuts[e][snpid]=np.array([])
-            bad_cuts[e][snpid]=np.array([])
-            fragend_cuts[e][snpid]=np.array([])
-
-
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+end = time.time()
+print("Time elapsed: %0.2f" % (end-start))
 sys.stdout.flush()
 
 ###############################################################################
 # How many SNPs can we query with this enzyme list?
-def what_snps_with_this_enzyme_list(enzs,good_cuts,bad_cuts,fragend_cuts,available_snps):
+def what_snps_with_this_enzyme_list(
+    enzs, good_cuts, bad_cuts, fragend_cuts, available_snps
+):
     goodsnps=dict()
     fragends=dict()
     removesnps=[]
