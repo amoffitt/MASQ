@@ -43,99 +43,99 @@ def check_sequence_for_cut_site(sequence,pattern):
     else:
         return False
 
-def snps_or_indels_in_region(bamfiles,regionstring,seq_dic,basequal_cutoff=28,vaf_cutoff=0.05,indelaf_cutoff=0.05,var_count_cutoff=2,indel_count_cutoff=2):
-    # Coordinates should be 0-based: (VCF/IGV position)-1 = Python Position
-    # Regions are defined as [start,stop), including start but not stop positions
-    # bamfiles here can be one string for one bam, or a list of strings for multiple bams
-    if isinstance(bamfiles,str):
-        bamlist=[bamfiles] # convert to iterable list
-    else:
-        bamlist=bamfiles
+# def snps_or_indels_in_region(bamfiles,regionstring,seq_dic,basequal_cutoff=28,vaf_cutoff=0.05,indelaf_cutoff=0.05,var_count_cutoff=2,indel_count_cutoff=2):
+#     # Coordinates should be 0-based: (VCF/IGV position)-1 = Python Position
+#     # Regions are defined as [start,stop), including start but not stop positions
+#     # bamfiles here can be one string for one bam, or a list of strings for multiple bams
+#     if isinstance(bamfiles,str):
+#         bamlist=[bamfiles] # convert to iterable list
+#     else:
+#         bamlist=bamfiles
 
-    # # Extract coordinates
-    print(regionstring)
-    [chrom,start,end] = split_region_string(regionstring)
-    print(chrom)
-    chrom = check_chr_in_seqdict(chrom,seq_dic)
-    print(chrom)
-    # Get reference sequence
-    region_ref_seq = seq_dic[chrom][(start-1):end]
-    print(region_ref_seq)
+#     # # Extract coordinates
+#     print(regionstring)
+#     [chrom,start,end] = split_region_string(regionstring)
+#     print(chrom)
+#     chrom = check_chr_in_seqdict(chrom,seq_dic)
+#     print(chrom)
+#     # Get reference sequence
+#     region_ref_seq = seq_dic[chrom][(start-1):end]
+#     print(region_ref_seq)
 
-    # Initialize
-    snp_positions = np.array([])
-    snp_alt_bases = []
+#     # Initialize
+#     snp_positions = np.array([])
+#     snp_alt_bases = []
 
-    for bam in bamlist:
-        # Load BAM file
-        bamfile = pysam.Samfile(bam,"r")
-        print(bamfile)
-        # Pileup columns
-        for pileupcolumn in bamfile.pileup(chrom, int(start)-1, int(end)+1, truncate = True, stepper = 'nofilter', max_depth=10000000): # stepper=all filters out pcr duplicates, set stepper=nofilter to not filter pcr duplicates
-            # What position are we at?
-            currpos = pileupcolumn.reference_pos
-            refbaseint = base2int(seq_dic[chrom][currpos])
+#     for bam in bamlist:
+#         # Load BAM file
+#         bamfile = pysam.Samfile(bam,"r")
+#         print(bamfile)
+#         # Pileup columns
+#         for pileupcolumn in bamfile.pileup(chrom, int(start)-1, int(end)+1, truncate = True, stepper = 'nofilter', max_depth=10000000): # stepper=all filters out pcr duplicates, set stepper=nofilter to not filter pcr duplicates
+#             # What position are we at?
+#             currpos = pileupcolumn.reference_pos
+#             refbaseint = base2int(seq_dic[chrom][currpos])
 
-            basecounts = np.array([0,0,0,0,0]);
-            totalcount = 0
-            indelcount = 0
-            has_something = False
+#             basecounts = np.array([0,0,0,0,0]);
+#             totalcount = 0
+#             indelcount = 0
+#             has_something = False
 
-            for pileupread in pileupcolumn.pileups:
-                if pileupread.indel != 0:
-                    indelcount+=1
-                    totalcount+=1
-                    continue;
-                if ((pileupread.alignment.qual is None) or (pileupread.query_position is None)):
-                    continue;
-                basequal = ord(pileupread.alignment.qual[pileupread.query_position])-33
-                if basequal<basequal_cutoff:
-                    continue; # skip reads with quality less than filter value
-                mapqual=pileupread.alignment.mapping_quality
-                if mapqual<10:
-                    continue; # skip reads with quality less than filter value
-                # Extract base from read at this position
-                totalcount+=1
-                base=pileupread.alignment.seq[pileupread.query_position]
-                baseint = base2int(base)
-                basecounts[baseint] += 1
+#             for pileupread in pileupcolumn.pileups:
+#                 if pileupread.indel != 0:
+#                     indelcount+=1
+#                     totalcount+=1
+#                     continue;
+#                 if ((pileupread.alignment.qual is None) or (pileupread.query_position is None)):
+#                     continue;
+#                 basequal = ord(pileupread.alignment.qual[pileupread.query_position])-33
+#                 if basequal<basequal_cutoff:
+#                     continue; # skip reads with quality less than filter value
+#                 mapqual=pileupread.alignment.mapping_quality
+#                 if mapqual<10:
+#                     continue; # skip reads with quality less than filter value
+#                 # Extract base from read at this position
+#                 totalcount+=1
+#                 base=pileupread.alignment.seq[pileupread.query_position]
+#                 baseint = base2int(base)
+#                 basecounts[baseint] += 1
 
-            # Drop N's
-            basecounts = basecounts[1:]
-            # Check if this pileup column has snp
-            if np.sum(basecounts)==0:
-                base_ratios = basecounts / 1.0
-            else:
-                base_ratios = basecounts / np.sum(basecounts)
-            # Drop reference base from ratios
-            ref_zero_base_ratios = base_ratios
-            ref_zero_base_ratios[refbaseint-1] = 0
-            # how many non-ref bases are here
-            non_ref_base_count = np.sum(ref_zero_base_ratios> vaf_cutoff)
+#             # Drop N's
+#             basecounts = basecounts[1:]
+#             # Check if this pileup column has snp
+#             if np.sum(basecounts)==0:
+#                 base_ratios = basecounts / 1.0
+#             else:
+#                 base_ratios = basecounts / np.sum(basecounts)
+#             # Drop reference base from ratios
+#             ref_zero_base_ratios = base_ratios
+#             ref_zero_base_ratios[refbaseint-1] = 0
+#             # how many non-ref bases are here
+#             non_ref_base_count = np.sum(ref_zero_base_ratios> vaf_cutoff)
 
-            if non_ref_base_count>0:
-                ref_zero_base_counts = basecounts
-                ref_zero_base_counts[refbaseint-1] = 0
-                if max(ref_zero_base_counts)>var_count_cutoff:
-                    altbase = int2base(np.argmax(ref_zero_base_ratios))
-                    has_something = True
-            if indelcount>indel_count_cutoff:
-                if float(indelcount)/totalcount > indelaf_cutoff:
-                    altbase = 'I' # indel
-                    has_something = True
-            if has_something:
-                snp_positions = np.append(snp_positions,currpos+1) # put back into igv 1-based cooridinates
-                snp_alt_bases.append(altbase)
+#             if non_ref_base_count>0:
+#                 ref_zero_base_counts = basecounts
+#                 ref_zero_base_counts[refbaseint-1] = 0
+#                 if max(ref_zero_base_counts)>var_count_cutoff:
+#                     altbase = int2base(np.argmax(ref_zero_base_ratios))
+#                     has_something = True
+#             if indelcount>indel_count_cutoff:
+#                 if float(indelcount)/totalcount > indelaf_cutoff:
+#                     altbase = 'I' # indel
+#                     has_something = True
+#             if has_something:
+#                 snp_positions = np.append(snp_positions,currpos+1) # put back into igv 1-based cooridinates
+#                 snp_alt_bases.append(altbase)
 
 
 
-    # Return 2 lists
-    # Positions of alterations in region
-    # Altered base/indel at each position
-    seq_positions = [int(x) for x in (snp_positions - start)]
-    snp_positions = [int(x) for x in snp_positions]
+#     # Return 2 lists
+#     # Positions of alterations in region
+#     # Altered base/indel at each position
+#     seq_positions = [int(x) for x in (snp_positions - start)]
+#     snp_positions = [int(x) for x in snp_positions]
 
-    return [snp_positions,seq_positions,snp_alt_bases,region_ref_seq]
+#     return [snp_positions,seq_positions,snp_alt_bases,region_ref_seq]
 
 
 
