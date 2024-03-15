@@ -2,8 +2,8 @@ name: MASQ
 dependencies:
   - python=3.*
   - snakemake
-  - matplotlib
-  - numpy
+  - matplotlib=3.4.*
+  - numpy=1.22.0
   - scipy
   - yaml
   - dill
@@ -21,4 +21,3 @@ channels:
   - bioconda
   - conda-forge
   - nodefaults
-
