@@ -1,0 +1,2 @@
+Region	Reads Per Tag	Number of Tags
+44	1	6
