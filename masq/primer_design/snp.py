@@ -821,3 +821,154 @@ def greedy_select_enzimes(
     print(f"Remaining SNPs: {len(available_snps)}")
 
     return snps_curr, enzymes_for_batch, too_small_batch
+
+
+###############################################################################
+# Given final snp list get enzymes assignments and cut distances
+# Update SNP dictionary with pass, drop, reasons etc
+def update_snplist_with_enzyme_selection(
+    snpdict: dict[str, dict[str, Any]],
+    snps_curr: dict[str, Any],
+    enzymes_for_batch: dict[int, list],
+    good_cuts: dict[str, dict[str, Any]],
+    bad_cuts: dict[str, dict[str, Any]],
+    fragend_cuts: dict[str, dict[str, Any]],
+    possible_enzyme_match_found: dict[str, Any],
+    too_small_batch: list,
+    enzyme_descriptors: dict[str, EnzymeDescriptor],
+    ref_genome: ReferenceGenome,
+    config: dict[str, Any]
+) -> None:
+    print("Collecting information on final snp and enzyme list")
+    for s, sd in snpdict.items():
+        enz_curr: list[str] = []
+        if s not in snps_curr:
+            if sd['status'] != 'pass':
+                continue
+            # Check if SNP had no chance - no enzyme that works with it alone
+            # didn't fail earlier steps
+            if s not in possible_enzyme_match_found.keys():
+                sd['status'] = 'drop'
+                sd['drop_reason'] = 'no_single_enzyme_matches'
+            elif s in too_small_batch:
+                sd['status'] = 'drop'
+                sd['drop_reason'] = 'batch_too_small_from_enzyme_selection'
+            else:
+                failedsnp_goodcuts = '; '.join([
+                    e + ':' + ','.join([
+                        str(x) for x in good_cuts[e][s]
+                    ]) for e in enz_curr
+                ])
+                failedsnp_badcuts = '; '.join([
+                    e + ':' + ','.join([
+                        str(x) for x in bad_cuts[e][s]
+                    ]) for e in enz_curr
+                ])
+                failedsnp_fragcuts = '; '.join([
+                    e + ':' + ','.join([
+                        str(x) for x in fragend_cuts[e][s]
+                    ]) for e in enz_curr
+                ])
+                # TODO different enzymes enz-curr for different batches
+                sd['good_cuts'] = failedsnp_goodcuts
+                sd['bad_cuts'] = failedsnp_badcuts
+                sd['fragend_cuts'] = failedsnp_fragcuts
+                sd['status'] = 'drop'
+                sd['drop_reason'] = 'enzyme_cut_compatibility'
+            continue
+
+        # Get enzyme list for this SNP's batch:
+        enz_curr = enzymes_for_batch[sd['batch']]
+
+        # Find enzyme and cut site upstream
+        sel_enz = ''
+        min_cut = sd['pos'] + 1000
+        max_cut = sd['pos'] - 1000
+
+        for e in enz_curr:
+            cuts = good_cuts[e][s]
+            if len(cuts) > 0:
+                if sd['strand'] == 'top':
+                    m = min(cuts)
+                    if m < min_cut:
+                        min_cut = m
+                        sel_enz = e
+                else:
+                    m = max(cuts)
+                    if m > max_cut:
+                        max_cut = m
+                        sel_enz = e
+
+        sd['enzyme'] = sel_enz
+        edesc = enzyme_descriptors[sel_enz]
+        sd['enzyme_recog_site'] = edesc.recognition_site
+        if sd['strand'] == 'top':
+            sd['nearest_upstream_cut'] = min_cut
+        else:
+            sd['nearest_upstream_cut'] = max_cut
+
+        # Find closest cut site downstream (default 300)
+        downstreamcut_min = sd['pos'] + config['frag_end_range'][0]
+        downstreamcut_max = sd['pos'] - config['frag_end_range'][0]
+        for e in enz_curr:
+            cuts = fragend_cuts[e][s]
+            if len(cuts) > 0:
+                if sd['strand'] == 'top':
+                    m = max(cuts)
+                    if m > downstreamcut_min:
+                        downstreamcut_min = m
+                else:
+                    m = min(cuts)
+                    if m < downstreamcut_max:
+                        downstreamcut_max = m
+
+        if sd['strand'] == 'top':
+            sd['nearest_downstream_cut'] = downstreamcut_min
+        else:
+            sd['nearest_downstream_cut'] = downstreamcut_max
+
+        # More information
+        sd['dist_from_mut_to_upstream_cut'] = \
+            np.abs(sd['nearest_upstream_cut'] - sd['pos'])
+        pos1 = min(
+            sd['nearest_upstream_cut'],
+            sd['nearest_downstream_cut']
+        )
+        pos2 = max(
+            sd['nearest_upstream_cut'],
+            sd['nearest_downstream_cut']
+        )
+        if ((pos2-pos1) < int(config['PRIMER_PRODUCT_SIZE_RANGE'][0])):
+            sd['status'] = 'drop'
+            sd['drop_reason'] = 'amplicon_too_short'
+        else:
+            sd['target_seq_for_primer_search'] = \
+                ref_genome.get_sequence(
+                    sd['chrom'], pos1, pos2)
+            sd['targetseq_pos1'] = pos1
+            sd['targetseq_pos2'] = pos2
+            sd['targetseq_coordinates'] = \
+                f"{sd['chrom']}:{pos1 + 1}-{pos2}"
+
+            passedsnp_goodcuts = \
+                '; '.join([
+                    e + ':' + ','.join([
+                        str(x) for x in good_cuts[e][s]
+                    ]) for e in enz_curr
+                ])
+            passedsnp_badcuts = '; '.join([
+                e + ':' + ','.join([
+                    str(x) for x in bad_cuts[e][s]
+                ]) for e in enz_curr
+            ])
+            passedsnp_fragcuts = '; '.join([
+                e + ':' + ','.join([
+                    str(x) for x in fragend_cuts[e][s]
+                ]) for e in enz_curr
+            ])
+
+            sd['good_cuts'] = passedsnp_goodcuts
+            sd['bad_cuts'] = passedsnp_badcuts
+            sd['fragend_cuts'] = passedsnp_fragcuts
+
+    print_snp_dict(snpdict, True)
