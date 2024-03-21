@@ -14,7 +14,8 @@ from masq.primer_design.enzymes import load_enzyme_descriptors, \
     process_enzyme_cut_sites
 from masq.primer_design.snp import process_snps, print_snp_dict, \
     filter_high_error_trinucleotides, check_snps_for_enzyme_cut_sites, \
-    snps_or_indels_in_region, check_snps_in_target_region_for_cut_sites
+    snps_or_indels_in_region, check_snps_in_target_region_for_cut_sites, \
+    select_good_bad_cuts_for_enzyme_snp_pair
 
 from masq.utils.reference_genome import ReferenceGenome
 
@@ -119,130 +120,135 @@ bad_enzyme_choices = check_snps_in_target_region_for_cut_sites(
 print("Bad enzyme choices due to cut sites introduced by SNPs")
 print(bad_enzyme_choices)
 
-###############################################################################
-# Current available SNPs from previous filtering
-pass_snpids = [x for x in snpdict.keys() if snpdict[x]['status'] == 'pass']
-snp_chrom = [snpdict[x]['chrom'] for x in pass_snpids]
-snp_pos = [snpdict[x]['pos'] for x in pass_snpids]
-snp_strand = [snpdict[x]['strand'] for x in pass_snpids]
+# ###############################################################################
+# # Current available SNPs from previous filtering
+# pass_snpids = [x for x in snpdict.keys() if snpdict[x]['status'] == 'pass']
+# snp_chrom = [snpdict[x]['chrom'] for x in pass_snpids]
+# snp_pos = [snpdict[x]['pos'] for x in pass_snpids]
+# snp_strand = [snpdict[x]['strand'] for x in pass_snpids]
 
-pass_snpdict = {s: d for s, d in snpdict.items() if d['status'] == 'pass'}
+# pass_snpdict = {s: d for s, d in snpdict.items() if d['status'] == 'pass'}
 
-print("SNP DICT BEFORE ENZYME SELECTION")
-for s in snpdict:
-    if snpdict[s]['status'] == 'drop':
-        print(s)
-        print(snpdict[s]['drop_reason'])
+# print("SNP DICT BEFORE ENZYME SELECTION")
+# for s in snpdict:
+#     if snpdict[s]['status'] == 'drop':
+#         print(s)
+#         print(snpdict[s]['drop_reason'])
 
-# Make dictionaries of good and bad cuts for each enzyme/snp pair
-print("Idenfying good and bad cut sites for each enzyme-snp pair")
-start = time.time()
-sys.stdout.flush()
+# # Make dictionaries of good and bad cuts for each enzyme/snp pair
+# print("Idenfying good and bad cut sites for each enzyme-snp pair")
+# start = time.time()
+# sys.stdout.flush()
 
-good_cuts: dict[str, dict[str, Any]] = {}
-bad_cuts: dict[str, dict[str, Any]] = {}
-fragend_cuts: dict[str, dict[str, Any]] = {}
-for e in enzymes:
-    good_cuts[e] = {}
-    bad_cuts[e] = {}
-    fragend_cuts[e] = {}
+# good_cuts: dict[str, dict[str, Any]] = {}
+# bad_cuts: dict[str, dict[str, Any]] = {}
+# fragend_cuts: dict[str, dict[str, Any]] = {}
+# for e in enzymes:
+#     good_cuts[e] = {}
+#     bad_cuts[e] = {}
+#     fragend_cuts[e] = {}
 
-# Keep track if SNP has any possible enzymes with good cuts / no bad cuts
-possible_enzyme_match_found = {}
+# # Keep track if SNP has any possible enzymes with good cuts / no bad cuts
+# possible_enzyme_match_found = {}
 
-for e in enzymes:
-    print(e)
-    sys.stdout.flush()
-    for chrom, pos, strand, snpid in zip(
-            snp_chrom, snp_pos, snp_strand, pass_snpids):
-        print("Collecting cut sites. Enzyme: %s. SNP %s" % (e, snpid))
-        if chrom in cut_sites_top[e].keys():
-            x_top = np.array(cut_sites_top[e][chrom])
-            x_btm = np.array(cut_sites_btm[e][chrom])
+# for e in enzymes:
+#     print(e)
+#     sys.stdout.flush()
+#     for chrom, pos, strand, snpid in zip(
+#             snp_chrom, snp_pos, snp_strand, pass_snpids):
+#         print("Collecting cut sites. Enzyme: %s. SNP %s" % (e, snpid))
+#         if chrom in cut_sites_top[e].keys():
+#             x_top = np.array(cut_sites_top[e][chrom])
+#             x_btm = np.array(cut_sites_btm[e][chrom])
 
-            if strand == 'top':
-                # Intervals are all closed intervals, not overlapping
-                bad_range = (
-                    pos + int(config['bad_cut_range'][0]),
-                    pos + int(config['bad_cut_range'][1])
-                )
-                good_range = (
-                    pos + int(config['good_cut_range'][0]),
-                    pos + int(config['good_cut_range'][1])
-                )
-                fragend_range = (
-                    pos + int(config['frag_end_range'][0]),
-                    pos + int(config['frag_end_range'][1])
-                )
+#             if strand == 'top':
+#                 # Intervals are all closed intervals, not overlapping
+#                 bad_range = (
+#                     pos + int(config['bad_cut_range'][0]),
+#                     pos + int(config['bad_cut_range'][1])
+#                 )
+#                 good_range = (
+#                     pos + int(config['good_cut_range'][0]),
+#                     pos + int(config['good_cut_range'][1])
+#                 )
+#                 fragend_range = (
+#                     pos + int(config['frag_end_range'][0]),
+#                     pos + int(config['frag_end_range'][1])
+#                 )
 
-                print("Ranges:")
-                print(good_range)
-                print(bad_range)
+#                 print("Ranges:")
+#                 print(good_range)
+#                 print(bad_range)
 
-                bad_list = x_top[
-                    ((x_top >= bad_range[0]) & (x_top <= bad_range[1]))
-                ]
-                good_list = x_top[
-                    ((x_top >= good_range[0]) & (x_top <= good_range[1]))
-                ]
-                fragend_list = x_btm[
-                    ((x_btm >= fragend_range[0]) & (x_btm <= fragend_range[1]))
-                ]
+#                 bad_list = x_top[
+#                     ((x_top >= bad_range[0]) & (x_top <= bad_range[1]))
+#                 ]
+#                 good_list = x_top[
+#                     ((x_top >= good_range[0]) & (x_top <= good_range[1]))
+#                 ]
+#                 fragend_list = x_btm[
+#                     ((x_btm >= fragend_range[0]) & (x_btm <= fragend_range[1]))
+#                 ]
 
-                print("Cuts in range:")
-                print(good_list)
-                print(bad_list)
+#                 print("Cuts in range:")
+#                 print(good_list)
+#                 print(bad_list)
 
-            else:
-                bad_range = (
-                    pos - int(config['bad_cut_range'][1]),
-                    pos - int(config['bad_cut_range'][0])
-                )
-                good_range = (
-                    pos - int(config['good_cut_range'][1]),
-                    pos - int(config['good_cut_range'][0])
-                )
-                fragend_range = (
-                    pos - int(config['frag_end_range'][1]),
-                    pos - int(config['frag_end_range'][0])
-                )
+#             else:
+#                 bad_range = (
+#                     pos - int(config['bad_cut_range'][1]),
+#                     pos - int(config['bad_cut_range'][0])
+#                 )
+#                 good_range = (
+#                     pos - int(config['good_cut_range'][1]),
+#                     pos - int(config['good_cut_range'][0])
+#                 )
+#                 fragend_range = (
+#                     pos - int(config['frag_end_range'][1]),
+#                     pos - int(config['frag_end_range'][0])
+#                 )
 
-                print("Ranges:")
-                print(good_range)
-                print(bad_range)
+#                 print("Ranges:")
+#                 print(good_range)
+#                 print(bad_range)
 
-                bad_list = x_btm[
-                    ((x_btm >= bad_range[0]) & (x_btm <= bad_range[1]))
-                ]
-                good_list = x_btm[
-                    ((x_btm >= good_range[0]) & (x_btm <= good_range[1]))
-                ]
-                fragend_list = x_top[
-                    ((x_top >= fragend_range[0]) & (x_top <= fragend_range[1]))
-                ]
+#                 bad_list = x_btm[
+#                     ((x_btm >= bad_range[0]) & (x_btm <= bad_range[1]))
+#                 ]
+#                 good_list = x_btm[
+#                     ((x_btm >= good_range[0]) & (x_btm <= good_range[1]))
+#                 ]
+#                 fragend_list = x_top[
+#                     ((x_top >= fragend_range[0]) & (x_top <= fragend_range[1]))
+#                 ]
 
-                print("Cuts in range:")
-                print(good_list)
-                print(bad_list)
+#                 print("Cuts in range:")
+#                 print(good_list)
+#                 print(bad_list)
 
-            good_cuts[e][snpid] = good_list
-            bad_cuts[e][snpid] = bad_list
-            fragend_cuts[e][snpid] = fragend_list
+#             good_cuts[e][snpid] = good_list
+#             bad_cuts[e][snpid] = bad_list
+#             fragend_cuts[e][snpid] = fragend_list
 
-            if ((len(good_list) > 0) and (len(bad_list) == 0)):
-                print("possible match found: %s" % snpid)
-                possible_enzyme_match_found[snpid] = 1
+#             if ((len(good_list) > 0) and (len(bad_list) == 0)):
+#                 print("possible match found: %s" % snpid)
+#                 possible_enzyme_match_found[snpid] = 1
 
-        else:
-            # no cuts on that chromosome
-            good_cuts[e][snpid] = np.array([])
-            bad_cuts[e][snpid] = np.array([])
-            fragend_cuts[e][snpid] = np.array([])
+#         else:
+#             # no cuts on that chromosome
+#             good_cuts[e][snpid] = np.array([])
+#             bad_cuts[e][snpid] = np.array([])
+#             fragend_cuts[e][snpid] = np.array([])
 
 
-end = time.time()
-print("Time elapsed: %0.2f" % (end-start))
-sys.stdout.flush()
+# end = time.time()
+# print("Time elapsed: %0.2f" % (end-start))
+# sys.stdout.flush()
+
+good_cuts, bad_cuts, fragend_cuts, possible_enzyme_match_found = \
+    select_good_bad_cuts_for_enzyme_snp_pair(
+        snpdict, enzymes, cut_sites_top, cut_sites_btm, config)
+
 
 ###############################################################################
 # How many SNPs can we query with this enzyme list?
