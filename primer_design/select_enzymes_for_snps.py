@@ -69,7 +69,7 @@ cut_sites_top, cut_sites_btm = process_enzyme_cut_sites(
     enz_folder, genomebuild)
 
 end = time.time()
-print("Time elapsed: %0.2f" % (end-start))
+print(f"Time elapsed: {(end - start):0.2f}")
 sys.stdout.flush()
 
 ###############################################################################
@@ -83,7 +83,7 @@ snpdict = process_snps(snp_file, ref_genome)
 print_snp_dict(snpdict, False)
 
 end = time.time()
-print("Time elapsed: %0.2f" % (end-start))
+print(f"Time elapsed: {(end - start):0.2f}")
 sys.stdout.flush()
 
 ###############################################################################
@@ -136,13 +136,13 @@ good_cuts, bad_cuts, fragend_cuts, possible_enzyme_match_found = \
         snpdict, enzymes, cut_sites_top, cut_sites_btm, config)
 
 end = time.time()
-print("Time elapsed: %0.2f" % (end-start))
+print(f"Time elapsed: {(end - start):0.2f}")
 sys.stdout.flush()
 
 
 ###############################################################################
-# Select enzymes in greedy approach - the one that gives the most snps when added
-# Stop when target snp number is reached or adding enzymes doesn't help
+# Select enzymes in greedy approach - the one that gives the most snps when
+# added. Stop when target snp number is reached or adding enzymes doesn't help
 print("Selecting enzymes that maximize snp list")
 start = time.time()
 print(enzymes)
@@ -155,13 +155,14 @@ snps_curr, enzymes_for_batch, too_small_batch = greedy_select_enzimes(
 )
 
 end = time.time()
-print("Time elapsed: %0.2f" % (end-start))
+print(f"Time elapsed: {(end - start):0.2f}")
 sys.stdout.flush()
 
 ###############################################################################
 # Given final snp list get enzymes assignments and cut distances
 # Update SNP dictionary with pass, drop, reasons etc
-print("Collecting information on final snp and enzyme list"); start = time.time()
+print("Collecting information on final snp and enzyme list")
+start = time.time()
 for s in snpdict:
     if s in snps_curr:
         # Get enzyme list for this SNP's batch:
