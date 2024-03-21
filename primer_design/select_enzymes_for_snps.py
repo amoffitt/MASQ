@@ -15,7 +15,8 @@ from masq.primer_design.snp import process_snps, print_snp_dict, \
     filter_high_error_trinucleotides, check_snps_for_enzyme_cut_sites, \
     snps_or_indels_in_region, check_snps_in_target_region_for_cut_sites, \
     select_good_bad_cuts_for_enzyme_snp_pair, \
-    what_snps_with_this_enzyme_list, greedy_select_enzimes
+    greedy_select_enzimes, \
+    update_snplist_with_enzyme_selection
 
 from masq.utils.reference_genome import ReferenceGenome
 
@@ -257,8 +258,24 @@ for s in snpdict:
                 snpdict[s]['status']='drop'
                 snpdict[s]['drop_reason']='enzyme_cut_compatibility'
 
-print_snp_dict(snpdict,True)
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+print_snp_dict(snpdict, True)
+
+# update_snplist_with_enzyme_selection(
+#     snpdict,
+#     snps_curr,
+#     enzymes_for_batch,
+#     good_cuts,
+#     bad_cuts,
+#     fragend_cuts,
+#     possible_enzyme_match_found,
+#     too_small_batch,
+#     enzyme_descriptors,
+#     ref_genome,
+#     config,
+# )
+
+end = time.time()
+print(f"Time elapsed: {(end - start):0.2f}")
 sys.stdout.flush()
 
 ###############################################################################
