@@ -29,3 +29,8 @@ primer_design/log.primerdesign*
 
 *.seq_dic.cpickle
 *.log
+
+config.yaml
+example_outputs
+sample1_blood
+sample2_tumor
