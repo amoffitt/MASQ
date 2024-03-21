@@ -15,7 +15,7 @@ from masq.primer_design.snp import process_snps, print_snp_dict, \
     filter_high_error_trinucleotides, check_snps_for_enzyme_cut_sites, \
     snps_or_indels_in_region, check_snps_in_target_region_for_cut_sites, \
     select_good_bad_cuts_for_enzyme_snp_pair, \
-    what_snps_with_this_enzyme_list
+    what_snps_with_this_enzyme_list, greedy_select_enzimes
 
 from masq.utils.reference_genome import ReferenceGenome
 
@@ -143,132 +143,19 @@ sys.stdout.flush()
 ###############################################################################
 # Select enzymes in greedy approach - the one that gives the most snps when added
 # Stop when target snp number is reached or adding enzymes doesn't help
-print("Selecting enzymes that maximize snp list"); start = time.time()
+print("Selecting enzymes that maximize snp list")
+start = time.time()
 print(enzymes)
 sys.stdout.flush()
 
-snps_curr = dict() # all snps from all batches
-batch_num=1
-available_snps = [x for x in snpdict.keys() if snpdict[x]['status']=='pass']
-too_small_batch = []
-enz_remain = list(enzymes)
-enzymes_for_batch = dict()
+snps_curr, enzymes_for_batch, too_small_batch = greedy_select_enzimes(
+    snpdict, enzymes,
+    good_cuts, bad_cuts, fragend_cuts,
+    bad_enzyme_choices, config
+)
 
-max_snp_count= config['max_snp_select']
-target_batch_size = int(np.ceil( config['target_batch_size'] * 2 )) # to account for dropped snps later
-min_batch_size = config['min_batch_size']
-
-while ((len(snps_curr)<max_snp_count) & (len(enz_remain)>0)): # keep selecting new snps
-
-    # New batch
-    # Reset things as necessary
-    enz_curr = []
-    enz_remain = list(enzymes) # all enzymes to start each batch
-    snps_curr_batch = dict()
-    print("Batch number: %d" % batch_num)
-    print("Number of enzymes to test: %d" % len(enz_remain))
-    print("Number of availalbe SNPs: %d" % len(available_snps))
-
-    while ((len(snps_curr_batch)<target_batch_size) & (len(enz_remain)>0)): # keep adding to batch
-        print("Target batch size: %d" % target_batch_size)
-        print("Current batch size: %d" % len(snps_curr_batch))
-
-        nmax=0 # start over with number of snps when go over enz again
-        print("Starting next iteration to find 1 enzyme to add")
-        for i,e in enumerate(enz_remain):
-            print("Iterations %d: Enzyme %s" % (i,e))
-            # Enzyme list to test, add one enzyme at a time
-            enz_test = list(enz_curr)
-            enz_test.append(e)
-
-            goodsnps = what_snps_with_this_enzyme_list(
-                snpdict,
-                enz_test,
-                good_cuts,
-                bad_cuts,
-                fragend_cuts,
-                available_snps,
-                bad_enzyme_choices,
-                config)
-            print(goodsnps)
-            # is this the best enzyme addition we've seen?
-            n = len(goodsnps)
-            print("By adding %s, we find %d SNPs" % (e,n))
-            if n>nmax:
-                nmax=n
-                imax=i
-                snpsmax=goodsnps
-                print("Better than before")
-        if nmax>0:
-            print("Best enzyme index: %d" % imax)
-            print(enz_remain)
-            print(enz_remain[imax])
-            print(nmax)
-
-        # is this enzyme addition better than without it?
-        if nmax>len(snps_curr_batch):
-
-            chosen_enz = enz_remain[imax]
-            print("Enzyme: %s" % chosen_enz)
-            enz_curr.append(chosen_enz)
-            print("Previous SNPs")
-            if len(snps_curr_batch)>0:
-                prev=set(snps_curr_batch.keys())
-                print(prev)
-            print("New SNPs")
-            new=set(snpsmax.keys())
-            print(new)
-            if len(snps_curr_batch)>0:
-                print("Lost from old set")
-                print(prev.difference(new))
-                print("Added in new set")
-                print(new.difference(prev))
-            snps_curr_batch = snpsmax
-            enz_remain.remove(chosen_enz) # remove i
-            print("#####################################")
-        else:
-            break
-        sys.stdout.flush()
-
-    # Done with batch - adjust snp lists accordingly
-    print("Batch %d final selection" % batch_num)
-
-    if len(snps_curr_batch)>min_batch_size:
-        if len(snps_curr_batch)<target_batch_size: # between min and target
-            snps_curr.update(snps_curr_batch) # add current batch to full list
-            # remove snps from available list
-            # also add batch info to snp dict
-            for s in snps_curr_batch.keys():
-                available_snps.remove(s)
-                snpdict[s]['batch']=batch_num
-            enzymes_for_batch[batch_num] = enz_curr
-            batch_num += 1
-            new_snps_curr_batch = snps_curr_batch
-        else: # batch is too big, only keep max number
-            new_snps_curr_batch = {k: snps_curr_batch[k] for k in list(snps_curr_batch)[:target_batch_size]}
-            snps_curr.update(new_snps_curr_batch) # add current batch to full list
-            # remove snps from available list
-            # also add batch info to snp dict
-            for s in new_snps_curr_batch.keys():
-                available_snps.remove(s)
-                snpdict[s]['batch']=batch_num
-            enzymes_for_batch[batch_num] = enz_curr 
-            batch_num += 1
-    else:
-        too_small_batch.append(snps_curr_batch.keys())
-        break
-
-    print(new_snps_curr_batch)
-    print("All selected SNPs")
-    print(snps_curr)
-    print("Remaining SNPs")
-    print(available_snps)
-    print("################################")
-
-print("All selected SNPs")
-print(snps_curr)
-print("Remaining SNPs: %d" % len(available_snps))
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+end = time.time()
+print("Time elapsed: %0.2f" % (end-start))
 sys.stdout.flush()
 
 ###############################################################################
