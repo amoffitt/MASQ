@@ -7,6 +7,8 @@ pip install -e .
 rm -rf example_outputs
 rm -rf test_example1
 rm -rf test_example2
+rm -rf sample1_blood
+rm -rf sample2_tumor
 rm -rf combined
 rm -rf .snakemake
 rm -rf config.yaml
