@@ -587,3 +587,83 @@ def select_good_bad_cuts_for_enzyme_snp_pair(
                 print(f"possible match found: {snpid}")
                 possible_enzyme_match_found[snpid] = 1
     return good_cuts, bad_cuts, fragend_cuts, possible_enzyme_match_found
+
+
+###############################################################################
+# How many SNPs can we query with this enzyme list?
+def what_snps_with_this_enzyme_list(
+    snpdict: dict[str, dict[str, Any]],
+    enzs: list[str],
+    good_cuts: dict[str, dict[str, Any]],
+    bad_cuts: dict[str, dict[str, Any]],
+    fragend_cuts: dict[str, dict[str, Any]],
+    available_snps: dict,
+    bad_enzyme_choices: dict[str, list[str]],
+    config: dict[str, Any],
+) -> dict[str, list[int]]:
+    goodsnps: dict[str, Any] = {}
+    fragends: dict[str, Any] = {}
+    removesnps = []
+    minfragsize = int(config['PRIMER_PRODUCT_SIZE_RANGE'][0])
+    print(enzs)
+    for e in enzs:
+        for s, cuts in good_cuts[e].items():
+            if s in available_snps:
+                if len(cuts) > 0:
+                    # add snp to list if there exist good cuts
+                    if s in goodsnps:
+                        goodsnps[s] = np.append(goodsnps[s], cuts)
+                    else:
+                        goodsnps[s] = cuts
+
+        for s, cuts in bad_cuts[e].items():
+            if s in available_snps:
+                if len(cuts) > 0:
+                    # remove snp if bad cuts are found with this enzyme
+                    removesnps.append(s)
+
+        for s, cuts in fragend_cuts[e].items():
+            if s in available_snps:
+                if s in fragends:
+                    fragends[s] = np.append(fragends[s], cuts)
+                else:
+                    fragends[s] = cuts
+
+    # check fragment size
+    for s, goodcuts in goodsnps.items():
+        if ((s in fragends) and (len(fragends[s]) > 0)):
+            # else no fragment ending cuts
+            # calculate fragment size
+            if snpdict[s]['strand'] == 'top':
+                fsize = min(goodcuts) - max(fragends[s])
+            else:
+                fsize = min(fragends[s]) - max(goodcuts)
+            print(f"Fragment size: {s}")
+            print(fsize)
+            # if smaller than allowed size, drop snp
+            if fsize < minfragsize:
+                print(f"Dropping {s}")
+                removesnps.append(s)
+
+    # check bad_enzyme_choices
+    for s in goodsnps:
+        for x in bad_enzyme_choices[s]:
+            if x in enzs:
+                removesnps.append(s)
+
+    # check distance between good cuts
+    for s, cuts in goodsnps.items():
+        if s in available_snps:
+            if len(cuts) > 1:
+                if snpdict[s]['strand'] == 'top':
+                    dist_to_next = (np.sort(cuts)-min(cuts))[1]
+                else:
+                    dist_to_next = (max(cuts)-np.sort(cuts))[-2]
+                if dist_to_next < config['drop_if_cut_site_dist_lt_x_bases']:
+                    removesnps.append(s)
+
+    for s in list(set(removesnps)):
+        if s in goodsnps:
+            del goodsnps[s]
+
+    return goodsnps
