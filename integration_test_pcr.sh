@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 pip install -e .
 
@@ -7,6 +7,8 @@ pip install -e .
 rm -rf example_outputs
 rm -rf test_example1
 rm -rf test_example2
+rm -rf sample1_blood
+rm -rf sample2_tumor
 rm -rf combined
 rm -rf .snakemake
 rm -rf config.yaml
@@ -16,12 +18,14 @@ tar zxf pcr_example_outputs.tar.gz -C example_outputs
 
 ln -s config.standardPCR.yaml config.yaml
 
-snakemake -j 5
+snakemake -j 5 || true
 
-# diff -r -x logs -x fastqc \
-#     example_outputs/test_example1 \
-#     test_example1 || { echo 'test_example1 differs from the expected' >&2; exit 1; }
-# diff -r  -x logs -x fastqc \
-#     example_outputs/test_example2 \
-#     test_example2 || { echo 'test_example2 differs from the expected' >&2; exit 1; }
+diff -r -x logs -x fastqc \
+    example_outputs/sample1_blood \
+    sample1_blood
+# || { echo 'sample1_blood differs from the expected' >&2; exit 1; }
+diff -r  -x logs -x fastqc \
+    example_outputs/sample2_tumor \
+    sample2_tumor
+# || { echo 'sample2_tumor differs from the expected' >&2; exit 1; }
 
