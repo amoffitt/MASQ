@@ -597,7 +597,7 @@ def what_snps_with_this_enzyme_list(
     good_cuts: dict[str, dict[str, Any]],
     bad_cuts: dict[str, dict[str, Any]],
     fragend_cuts: dict[str, dict[str, Any]],
-    available_snps: dict,
+    available_snps: list,
     bad_enzyme_choices: dict[str, list[str]],
     config: dict[str, Any],
 ) -> dict[str, list[int]]:
@@ -667,3 +667,157 @@ def what_snps_with_this_enzyme_list(
             del goodsnps[s]
 
     return goodsnps
+
+
+###############################################################################
+# Select enzymes in greedy approach - the one that gives the most snps when
+# added. Stop when target snp number is reached or adding enzymes doesn't help
+def greedy_select_enzimes(
+    snpdict: dict[str, dict[str, Any]],
+    enzymes: list[str],
+    good_cuts: dict[str, dict[str, Any]],
+    bad_cuts: dict[str, dict[str, Any]],
+    fragend_cuts: dict[str, dict[str, Any]],
+    bad_enzyme_choices: dict[str, list[str]],
+    config: dict[str, Any],
+) -> tuple[dict[str, Any], dict[int, list], list[list]]:
+    snps_curr: dict[str, Any] = {}  # all snps from all batches
+    batch_num = 1
+    available_snps = [
+        x for x in snpdict.keys() if snpdict[x]['status'] == 'pass'
+    ]
+    too_small_batch = []
+    enz_remain = list(enzymes)
+    enzymes_for_batch = {}
+
+    max_snp_count = config['max_snp_select']
+    target_batch_size = int(np.ceil(
+        config['target_batch_size'] * 2))  # to account for dropped snps later
+    min_batch_size = config['min_batch_size']
+
+    while ((len(snps_curr) < max_snp_count)
+            & (len(enz_remain) > 0)):
+        # keep selecting new snps
+
+        # New batch
+        # Reset things as necessary
+        enz_curr: list = []
+        # all enzymes to start each batch
+        enz_remain = list(enzymes)
+        snps_curr_batch: dict = {}
+        print(f"Batch number: {batch_num}")
+        print(f"Number of enzymes to test: {len(enz_remain)}")
+        print(f"Number of availalbe SNPs: {len(available_snps)}")
+
+        while ((len(snps_curr_batch) < target_batch_size)
+                & (len(enz_remain) > 0)):
+            # keep adding to batch
+            print(f"Target batch size: {target_batch_size}")
+            print(f"Current batch size: {len(snps_curr_batch)}")
+
+            # start over with number of snps when go over enz again
+            nmax = 0
+
+            print("Starting next iteration to find 1 enzyme to add")
+            for i, e in enumerate(enz_remain):
+                print(f"Iterations %d: Enzyme {(i, e)}")
+                # Enzyme list to test, add one enzyme at a time
+                enz_test = list(enz_curr)
+                enz_test.append(e)
+
+                goodsnps = what_snps_with_this_enzyme_list(
+                    snpdict,
+                    enz_test,
+                    good_cuts,
+                    bad_cuts,
+                    fragend_cuts,
+                    available_snps,
+                    bad_enzyme_choices,
+                    config)
+                print(goodsnps)
+                # is this the best enzyme addition we've seen?
+                n = len(goodsnps)
+                print(f"By adding {e}, we find {n} SNPs")
+                if n > nmax:
+                    nmax = n
+                    imax = i
+                    snpsmax = goodsnps
+                    print("Better than before")
+            if nmax > 0:
+                print(f"Best enzyme index: {imax}")
+                print(enz_remain)
+                print(enz_remain[imax])
+                print(nmax)
+
+            # is this enzyme addition better than without it?
+            if nmax > len(snps_curr_batch):
+
+                chosen_enz = enz_remain[imax]
+                print(f"Enzyme: {chosen_enz}")
+                enz_curr.append(chosen_enz)
+                print("Previous SNPs")
+                if len(snps_curr_batch) > 0:
+                    prev = set(snps_curr_batch.keys())
+                    print(prev)
+                print("New SNPs")
+                new = set(snpsmax.keys())
+                print(new)
+                if len(snps_curr_batch) > 0:
+                    print("Lost from old set")
+                    print(prev.difference(new))
+                    print("Added in new set")
+                    print(new.difference(prev))
+                snps_curr_batch = snpsmax
+                enz_remain.remove(chosen_enz)  # remove i
+                print("#####################################")
+            else:
+                break
+            sys.stdout.flush()
+
+        # Done with batch - adjust snp lists accordingly
+        print(f"Batch {batch_num} final selection")
+
+        if len(snps_curr_batch) > min_batch_size:
+            if len(snps_curr_batch) < target_batch_size:
+                # between min and target
+                # add current batch to full list
+                snps_curr.update(snps_curr_batch)
+                # remove snps from available list
+                # also add batch info to snp dict
+                for s in snps_curr_batch:
+                    available_snps.remove(s)
+                    snpdict[s]['batch'] = batch_num
+                enzymes_for_batch[batch_num] = enz_curr
+                batch_num += 1
+                new_snps_curr_batch = snps_curr_batch
+            else:
+                # batch is too big, only keep max number
+                new_snps_curr_batch = {
+                    k: snps_curr_batch[k]
+                    for k in list(snps_curr_batch)[:target_batch_size]
+                }
+                # add current batch to full list
+                snps_curr.update(new_snps_curr_batch)
+                # remove snps from available list
+                # also add batch info to snp dict
+                for s in new_snps_curr_batch.keys():
+                    available_snps.remove(s)
+                    snpdict[s]['batch'] = batch_num
+                enzymes_for_batch[batch_num] = enz_curr
+                batch_num += 1
+        else:
+            too_small_batch.append(list(snps_curr_batch.keys()))
+            break
+
+        print(new_snps_curr_batch)
+        print("All selected SNPs")
+        print(snps_curr)
+        print("Remaining SNPs")
+        print(available_snps)
+        print("################################")
+
+    print("All selected SNPs")
+    print(snps_curr)
+    print(f"Remaining SNPs: {len(available_snps)}")
+
+    return snps_curr, enzymes_for_batch, too_small_batch
