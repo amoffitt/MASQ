@@ -9,8 +9,11 @@ rm -rf test_example1
 rm -rf test_example2
 rm -rf combined
 rm -rf .snakemake
+rm -rf config.yaml
 
-tar zxf example_outputs.tar.gz
+tar zxf masq_example_outputs.tar.gz
+
+ln -s config.masq.yaml config.yaml
 
 snakemake -j 5
 
