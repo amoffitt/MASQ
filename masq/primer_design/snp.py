@@ -854,6 +854,7 @@ def update_snplist_with_enzyme_selection(
                 sd['status'] = 'drop'
                 sd['drop_reason'] = 'batch_too_small_from_enzyme_selection'
             else:
+                # enz_curr = enzymes_for_batch[snpdict[s]['batch']]
                 failedsnp_goodcuts = '; '.join([
                     e + ':' + ','.join([
                         str(x) for x in good_cuts[e][s]
