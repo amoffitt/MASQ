@@ -19,7 +19,7 @@ from masq.primer_design.snp import process_snps, print_snp_dict, \
     greedy_select_enzimes, \
     update_snplist_with_enzyme_selection
 from masq.primer_design.primer3_helpers import run_primer3
-
+from masq.primer_design.blat_helpers import run_blat, process_blat_results
 from masq.utils.reference_genome import ReferenceGenome
 
 from primer_design_functions import *
@@ -284,10 +284,13 @@ sys.stdout.flush()
 
 ###############################################################################
 #Run PRIMER3
-date=datetime.datetime.now().strftime('%Y-%m-%d.%H-%M')
-primer3file=config['output_folder']+"primer3.input."+config['sample']+"."+date+".txt"
-blatqueryfile=config['output_folder']+"blat_query.fa."+config['sample']+"."+date+".txt"
-blatresultfile=config['output_folder']+"blat_results.out."+config['sample']+"."+date+".txt"
+date = datetime.datetime.now().strftime('%Y-%m-%d.%H-%M')
+primer3file = config['output_folder'] + "primer3.input." + \
+    config['sample'] + "." + date + ".txt"
+blatqueryfile = config['output_folder'] + "blat_query.fa." + \
+    config['sample'] + "." + date + ".txt"
+blatresultfile = config['output_folder'] + "blat_results.out." + \
+    config['sample'] + "." + date + ".txt"
 print(primer3file)
 print(blatqueryfile)
 print(blatresultfile)
@@ -295,64 +298,10 @@ print(blatresultfile)
 os.makedirs(os.path.dirname(primer3file), exist_ok=True)
 
 #primer3 = config['primer3']
-primer3 = "primer3_core" # if installed in environment or on path
+primer3 = "primer3_core"  # if installed in environment or on path
 
 print("Running primer3")
 sys.stdout.flush()
-
-# primer3results=dict()
-# with open(blatqueryfile,'w') as blatf:
-#     for snpid,snpinfo in snpdict.items():
-#         if snpinfo['status']=='pass':
-#             print("snp")
-#             write_primer3_input_file(
-#                 primer3file,
-#                 snpid,
-#                 snpdict[snpid]['target_seq_for_primer_search'],
-#                 snpdict[snpid]['strand'],
-#                 snpdict[snpid]['dist_from_mut_to_upstream_cut'],
-#                 config)
-#             print("")
-#             p=subprocess.Popen(
-#                 "%s %s" % (primer3,primer3file),
-#                 shell=True,
-#                 stdout=subprocess.PIPE)
-#             primer3out, err = p.communicate()
-#             print(primer3out.decode('ascii'))
-#             print("")
-#             sys.stdout.flush()
-
-#             # Store all the primer3 results
-#             primer3results[snpid]=dict()
-#             for line in primer3out.decode('ascii').split('\n'):
-#                 if line.startswith('PRIMER'):
-#                     t,val=line.split("=")
-#                     primer3results[snpid][t]=val
-
-#             if "PRIMER_PAIR_NUM_RETURNED=0" in primer3out.decode('ascii'):
-#                 snpdict[snpid]['status']='drop'
-#                 snpdict[snpid]['drop_reason']='primer3_nonefound'
-
-#                 snpdict[snpid]['left_primer_explanation']=primer3results[snpid]['PRIMER_LEFT_EXPLAIN']
-#                 snpdict[snpid]['right_primer_explanation']=primer3results[snpid]['PRIMER_RIGHT_EXPLAIN']
-#             elif "PRIMER_ERROR" in primer3out.decode('ascii'):
-#                 snpdict[snpid]['status']='drop'
-#                 snpdict[snpid]['drop_reason']='primer3_error_seelog'
-
-#             else: # primer pairs found!
-#                 for i in range(config['PRIMER_NUM_RETURN']):
-#                     t="PRIMER_LEFT_%d_SEQUENCE" % i
-#                     if t in primer3results[snpid].keys():
-#                         seq=primer3results[snpid][t]
-#                         blatf.write(">"+snpid+"_"+t+"\n")
-#                         blatf.write(seq+"\n")
-
-#                     t="PRIMER_RIGHT_%d_SEQUENCE" % i
-#                     if t in primer3results[snpid].keys():
-#                         seq=primer3results[snpid][t]
-#                         blatf.write(">"+snpid+"_"+t+"\n")
-#                         blatf.write(seq+"\n")
-
 
 primer3results = run_primer3(
     snpdict,
@@ -364,42 +313,44 @@ primer3results = run_primer3(
 
 ###############################################################################
 # Run BLAT on all primer options
-start=time.time()
+start = time.time()
 print("Running BLAT on all primer options for all SNPs")
 sys.stdout.flush()
-run_blat(blatqueryfile,blatresultfile,config)
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+run_blat(blatqueryfile, blatresultfile, config)
+end = time.time()
+print(f"Time elapsed: {(end - start):0.2f}")
 sys.stdout.flush()
 
 ###############################################################################
 # Process BLAT results
 # Counter for number of hits per sequence
-blat_hits=dict()
+# blat_hits=dict()
 
-with open(blatresultfile,'r') as blatr:
-    for line in blatr:
-        s=line.split()[9]
-        s_split=s.split("_")
-        snpid="_".join(s_split[0:3])
-        leftright=s_split[4]
-        primerid=s_split[5]
-        gaps=int(line.split()[6])
-        # Only count entry if score is X away from length of primer(query)
-        plen=int(line.split()[10])
-        score=int(line.split()[0])
-        if (score>=(plen - config['blat_num_mismatches'])):
-            print("%s - %d - %d - %d" % (s,plen,score,gaps))
-            if snpid in blat_hits:
-                if leftright in blat_hits[snpid]:
-                    blat_hits[snpid][leftright].update([primerid])
-                else:
-                    blat_hits[snpid][leftright]=Counter()
-                    blat_hits[snpid][leftright].update([primerid])
-            else:
-                blat_hits[snpid]=dict()
-                blat_hits[snpid][leftright]=Counter()
-                blat_hits[snpid][leftright].update([primerid])
+# with open(blatresultfile,'r') as blatr:
+#     for line in blatr:
+#         s=line.split()[9]
+#         s_split=s.split("_")
+#         snpid="_".join(s_split[0:3])
+#         leftright=s_split[4]
+#         primerid=s_split[5]
+#         gaps=int(line.split()[6])
+#         # Only count entry if score is X away from length of primer(query)
+#         plen=int(line.split()[10])
+#         score=int(line.split()[0])
+#         if (score>=(plen - config['blat_num_mismatches'])):
+#             print("%s - %d - %d - %d" % (s,plen,score,gaps))
+#             if snpid in blat_hits:
+#                 if leftright in blat_hits[snpid]:
+#                     blat_hits[snpid][leftright].update([primerid])
+#                 else:
+#                     blat_hits[snpid][leftright]=Counter()
+#                     blat_hits[snpid][leftright].update([primerid])
+#             else:
+#                 blat_hits[snpid]=dict()
+#                 blat_hits[snpid][leftright]=Counter()
+#                 blat_hits[snpid][leftright].update([primerid])
 
+blat_hits = process_blat_results(blatresultfile, config)
 
 ###############################################################################
 
