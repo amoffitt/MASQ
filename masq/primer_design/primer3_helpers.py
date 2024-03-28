@@ -120,3 +120,27 @@ def run_primer3(
                             blatf.write(">"+snpid+"_"+t+"\n")
                             blatf.write(seq+"\n")
     return primer3results
+
+
+def get_primer_coordinates(
+    primerid: str,
+    snpid: str,
+    primer3results: dict[str, Any],
+    snpdict: dict[str, dict[str, Any]],
+) -> tuple[str, str]:
+    chrom = snpdict[snpid]['chrom']
+    targetpos = snpdict[snpid]['targetseq_pos1']
+    left1 = int(primer3results[snpid][
+        f"PRIMER_LEFT_{primerid}"].split(',')[0]) + targetpos + 1
+    left2 = int(primer3results[snpid][
+        f"PRIMER_LEFT_{primerid}"].split(',')[0]) + targetpos + 1 + \
+        int(primer3results[snpid][f"PRIMER_LEFT_{primerid}"].split(',')[1])
+    right1 = int(primer3results[snpid][
+        f"PRIMER_RIGHT_{primerid}"].split(',')[0]) + targetpos + 2 - \
+        int(primer3results[snpid][f"PRIMER_RIGHT_{primerid}"].split(',')[1])
+    right2 = int(primer3results[snpid][
+        f"PRIMER_RIGHT_{primerid}"].split(',')[0]) + targetpos + 2
+
+    left_coord = f"{chrom}:{left1}-{left2}"
+    right_coord = f"{chrom}:{right1}-{right2}"
+    return (left_coord, right_coord)
