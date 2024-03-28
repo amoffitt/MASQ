@@ -222,14 +222,14 @@ def check_sequence_for_cut_site(sequence,pattern):
 #     out, err = p.communicate()
 
 
-def get_primer_coordinates(primerid,snpid,primer3results,snpdict):
-    chrom = snpdict[snpid]['chrom']
-    targetpos = snpdict[snpid]['targetseq_pos1']
-    left1 = int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ targetpos + 1
-    left2 = int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ targetpos + 1 + int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])
-    right1 = int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ targetpos + 2 - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1])
-    right2 = int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ targetpos + 2
+# def get_primer_coordinates(primerid,snpid,primer3results,snpdict):
+#     chrom = snpdict[snpid]['chrom']
+#     targetpos = snpdict[snpid]['targetseq_pos1']
+#     left1 = int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ targetpos + 1
+#     left2 = int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ targetpos + 1 + int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])
+#     right1 = int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ targetpos + 2 - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1])
+#     right2 = int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ targetpos + 2
 
-    left_coord = "%s:%d-%d" % (chrom,left1,left2)
-    right_coord = "%s:%d-%d" % (chrom,right1,right2)
-    return (left_coord,right_coord)
+#     left_coord = "%s:%d-%d" % (chrom,left1,left2)
+#     right_coord = "%s:%d-%d" % (chrom,right1,right2)
+#     return (left_coord,right_coord)
