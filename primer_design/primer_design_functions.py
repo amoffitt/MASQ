@@ -165,61 +165,61 @@ def check_sequence_for_cut_site(sequence,pattern):
 #     sys.stdout.flush()
 
 
-def write_primer3_input_file(fn,snpid,templateseq,strand,dist,config):
-    # Prepare PRIMER3 input file and run PRIMER3 on each SNP
-    # SEQUENCE_TARGET should be position, followed by length!
-    primer3text="""SEQUENCE_ID=%s
-SEQUENCE_TEMPLATE=%s
-PRIMER_TASK=generic
-PRIMER_PICK_LEFT_PRIMER=1
-PRIMER_PICK_RIGHT_PRIMER=1
-PRIMER_OPT_SIZE=%d
-PRIMER_MIN_SIZE=%d
-PRIMER_MAX_SIZE=%d
-PRIMER_PRODUCT_SIZE_RANGE=%d-%d
-PRIMER_PRODUCT_OPT_SIZE=%d
-PRIMER_MIN_TM=%d
-PRIMER_MAX_TM=%d
-PRIMER_OPT_TM=%d
-PRIMER_PAIR_MAX_DIFF_TM=%d
-PRIMER_MIN_GC=%d
-PRIMER_MAX_GC=%d
-PRIMER_MAX_HAIRPIN_TH=%d
-PRIMER_MAX_POLY_X=%d
-PRIMER_NUM_RETURN=%d
-PRIMER_TM_FORMULA=0
-PRIMER_SALT_CORRECTIONS=0
-PRIMER_EXPLAIN_FLAG=1
-PRIMER_THERMODYNAMIC_PARAMETERS_PATH=%s
-=""" % (snpid, templateseq, config['PRIMER_OPT_SIZE'], config['PRIMER_MIN_SIZE'], config['PRIMER_MAX_SIZE'],
-        config['PRIMER_PRODUCT_SIZE_RANGE'][0], config['PRIMER_PRODUCT_SIZE_RANGE'][1], config['PRIMER_PRODUCT_OPT_SIZE'],
-        config['PRIMER_MIN_TM'], config['PRIMER_MAX_TM'], config['PRIMER_OPT_TM'], config['PRIMER_PAIR_MAX_DIFF_TM'],
-        config['PRIMER_MIN_GC'], config['PRIMER_MAX_GC'], config['PRIMER_MAX_HAIRPIN_TH'], config['PRIMER_MAX_POLY_X'],
-        config['PRIMER_NUM_RETURN'], config['primer3_thermo_param_folder'])
+# def write_primer3_input_file(fn,snpid,templateseq,strand,dist,config):
+#     # Prepare PRIMER3 input file and run PRIMER3 on each SNP
+#     # SEQUENCE_TARGET should be position, followed by length!
+#     primer3text="""SEQUENCE_ID=%s
+# SEQUENCE_TEMPLATE=%s
+# PRIMER_TASK=generic
+# PRIMER_PICK_LEFT_PRIMER=1
+# PRIMER_PICK_RIGHT_PRIMER=1
+# PRIMER_OPT_SIZE=%d
+# PRIMER_MIN_SIZE=%d
+# PRIMER_MAX_SIZE=%d
+# PRIMER_PRODUCT_SIZE_RANGE=%d-%d
+# PRIMER_PRODUCT_OPT_SIZE=%d
+# PRIMER_MIN_TM=%d
+# PRIMER_MAX_TM=%d
+# PRIMER_OPT_TM=%d
+# PRIMER_PAIR_MAX_DIFF_TM=%d
+# PRIMER_MIN_GC=%d
+# PRIMER_MAX_GC=%d
+# PRIMER_MAX_HAIRPIN_TH=%d
+# PRIMER_MAX_POLY_X=%d
+# PRIMER_NUM_RETURN=%d
+# PRIMER_TM_FORMULA=0
+# PRIMER_SALT_CORRECTIONS=0
+# PRIMER_EXPLAIN_FLAG=1
+# PRIMER_THERMODYNAMIC_PARAMETERS_PATH=%s
+# =""" % (snpid, templateseq, config['PRIMER_OPT_SIZE'], config['PRIMER_MIN_SIZE'], config['PRIMER_MAX_SIZE'],
+#         config['PRIMER_PRODUCT_SIZE_RANGE'][0], config['PRIMER_PRODUCT_SIZE_RANGE'][1], config['PRIMER_PRODUCT_OPT_SIZE'],
+#         config['PRIMER_MIN_TM'], config['PRIMER_MAX_TM'], config['PRIMER_OPT_TM'], config['PRIMER_PAIR_MAX_DIFF_TM'],
+#         config['PRIMER_MIN_GC'], config['PRIMER_MAX_GC'], config['PRIMER_MAX_HAIRPIN_TH'], config['PRIMER_MAX_POLY_X'],
+#         config['PRIMER_NUM_RETURN'], config['primer3_thermo_param_folder'])
 
-    if strand=='top':
-        forcetext="SEQUENCE_FORCE_RIGHT_START=%d\n" % (len(templateseq)-1)
-        targettext="SEQUENCE_TARGET=%d,%d\n" % ( len(templateseq)-dist-1,  2  )
-    else:
-        forcetext="SEQUENCE_FORCE_LEFT_START=0\n"
-        targettext="SEQUENCE_TARGET=%d,%d\n" % (dist-1, 2)
-    primer3text_plusforce = targettext + forcetext + primer3text
+#     if strand=='top':
+#         forcetext="SEQUENCE_FORCE_RIGHT_START=%d\n" % (len(templateseq)-1)
+#         targettext="SEQUENCE_TARGET=%d,%d\n" % ( len(templateseq)-dist-1,  2  )
+#     else:
+#         forcetext="SEQUENCE_FORCE_LEFT_START=0\n"
+#         targettext="SEQUENCE_TARGET=%d,%d\n" % (dist-1, 2)
+#     primer3text_plusforce = targettext + forcetext + primer3text
 
-    with open(fn,'w') as f:
-        f.write(primer3text_plusforce)
-    print("writing file")
-    print(snpid)
+#     with open(fn,'w') as f:
+#         f.write(primer3text_plusforce)
+#     print("writing file")
+#     print(snpid)
 
-def run_blat(inputfile,outputfile,config,mode='primers'):
-    ref=config['ref_fa']
-    #blat = config['blat']
-    blat = "blat" # if installed via conda or on path
-    if mode=='primers':
-        cmd="%s %s %s %s -tileSize=%d -stepSize=%d -minIdentity=%d -minScore=%d -maxIntron=%d -noHead" % (blat,ref,inputfile,outputfile,config['tileSize'],config['stepSize'],config['minIdentity'],config['minScore'],config['maxIntron'])
-    else: # full length blat
-        cmd="%s %s %s %s -tileSize=%d -stepSize=%d -minIdentity=%d -minScore=%d -maxIntron=%d -noHead" % (blat,ref,inputfile,outputfile,config['tileSize'],config['stepSize'],config['minIdentity_full'],config['minScore_full'],config['maxIntron_full'])
-    p=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    out, err = p.communicate()
+# def run_blat(inputfile,outputfile,config,mode='primers'):
+#     ref=config['ref_fa']
+#     #blat = config['blat']
+#     blat = "blat" # if installed via conda or on path
+#     if mode=='primers':
+#         cmd="%s %s %s %s -tileSize=%d -stepSize=%d -minIdentity=%d -minScore=%d -maxIntron=%d -noHead" % (blat,ref,inputfile,outputfile,config['tileSize'],config['stepSize'],config['minIdentity'],config['minScore'],config['maxIntron'])
+#     else: # full length blat
+#         cmd="%s %s %s %s -tileSize=%d -stepSize=%d -minIdentity=%d -minScore=%d -maxIntron=%d -noHead" % (blat,ref,inputfile,outputfile,config['tileSize'],config['stepSize'],config['minIdentity_full'],config['minScore_full'],config['maxIntron_full'])
+#     p=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+#     out, err = p.communicate()
 
 
 def get_primer_coordinates(primerid,snpid,primer3results,snpdict):
