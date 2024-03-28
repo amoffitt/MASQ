@@ -8,6 +8,7 @@ from collections import Counter
 import yaml
 import datetime
 import pprint
+import copy
 
 from masq.primer_design.enzymes import load_enzyme_descriptors, \
     process_enzyme_cut_sites
@@ -17,6 +18,7 @@ from masq.primer_design.snp import process_snps, print_snp_dict, \
     select_good_bad_cuts_for_enzyme_snp_pair, \
     greedy_select_enzimes, \
     update_snplist_with_enzyme_selection
+from masq.primer_design.primer3_helpers import run_primer3
 
 from masq.utils.reference_genome import ReferenceGenome
 
@@ -292,61 +294,73 @@ print(blatresultfile)
 # make output directory if it doesn't exist
 os.makedirs(os.path.dirname(primer3file), exist_ok=True)
 
-primer3results=dict()
 #primer3 = config['primer3']
 primer3 = "primer3_core" # if installed in environment or on path
 
 print("Running primer3")
 sys.stdout.flush()
 
-with open(blatqueryfile,'w') as blatf:
-    for snpid,snpinfo in snpdict.items():
-        if snpinfo['status']=='pass':
-            print("snp")
-            write_primer3_input_file(
-                primer3file,
-                snpid,
-                snpdict[snpid]['target_seq_for_primer_search'],
-                snpdict[snpid]['strand'],
-                snpdict[snpid]['dist_from_mut_to_upstream_cut'],
-                config)
-            print("")
-            p=subprocess.Popen("%s %s" % (primer3,primer3file), shell=True, stdout=subprocess.PIPE)
-            primer3out, err = p.communicate()
-            print(primer3out.decode('ascii'))
-            print("")
-            sys.stdout.flush()
+# primer3results=dict()
+# with open(blatqueryfile,'w') as blatf:
+#     for snpid,snpinfo in snpdict.items():
+#         if snpinfo['status']=='pass':
+#             print("snp")
+#             write_primer3_input_file(
+#                 primer3file,
+#                 snpid,
+#                 snpdict[snpid]['target_seq_for_primer_search'],
+#                 snpdict[snpid]['strand'],
+#                 snpdict[snpid]['dist_from_mut_to_upstream_cut'],
+#                 config)
+#             print("")
+#             p=subprocess.Popen(
+#                 "%s %s" % (primer3,primer3file),
+#                 shell=True,
+#                 stdout=subprocess.PIPE)
+#             primer3out, err = p.communicate()
+#             print(primer3out.decode('ascii'))
+#             print("")
+#             sys.stdout.flush()
 
-            # Store all the primer3 results
-            primer3results[snpid]=dict()
-            for line in primer3out.decode('ascii').split('\n'):
-                if line.startswith('PRIMER'):
-                    t,val=line.split("=")
-                    primer3results[snpid][t]=val
+#             # Store all the primer3 results
+#             primer3results[snpid]=dict()
+#             for line in primer3out.decode('ascii').split('\n'):
+#                 if line.startswith('PRIMER'):
+#                     t,val=line.split("=")
+#                     primer3results[snpid][t]=val
 
-            if "PRIMER_PAIR_NUM_RETURNED=0" in primer3out.decode('ascii'):
-                snpdict[snpid]['status']='drop'
-                snpdict[snpid]['drop_reason']='primer3_nonefound'
+#             if "PRIMER_PAIR_NUM_RETURNED=0" in primer3out.decode('ascii'):
+#                 snpdict[snpid]['status']='drop'
+#                 snpdict[snpid]['drop_reason']='primer3_nonefound'
 
-                snpdict[snpid]['left_primer_explanation']=primer3results[snpid]['PRIMER_LEFT_EXPLAIN']
-                snpdict[snpid]['right_primer_explanation']=primer3results[snpid]['PRIMER_RIGHT_EXPLAIN']
-            elif "PRIMER_ERROR" in primer3out.decode('ascii'):
-                snpdict[snpid]['status']='drop'
-                snpdict[snpid]['drop_reason']='primer3_error_seelog'
+#                 snpdict[snpid]['left_primer_explanation']=primer3results[snpid]['PRIMER_LEFT_EXPLAIN']
+#                 snpdict[snpid]['right_primer_explanation']=primer3results[snpid]['PRIMER_RIGHT_EXPLAIN']
+#             elif "PRIMER_ERROR" in primer3out.decode('ascii'):
+#                 snpdict[snpid]['status']='drop'
+#                 snpdict[snpid]['drop_reason']='primer3_error_seelog'
 
-            else: # primer pairs found!
-                for i in range(config['PRIMER_NUM_RETURN']):
-                    t="PRIMER_LEFT_%d_SEQUENCE" % i
-                    if t in primer3results[snpid].keys():
-                        seq=primer3results[snpid][t]
-                        blatf.write(">"+snpid+"_"+t+"\n")
-                        blatf.write(seq+"\n")
+#             else: # primer pairs found!
+#                 for i in range(config['PRIMER_NUM_RETURN']):
+#                     t="PRIMER_LEFT_%d_SEQUENCE" % i
+#                     if t in primer3results[snpid].keys():
+#                         seq=primer3results[snpid][t]
+#                         blatf.write(">"+snpid+"_"+t+"\n")
+#                         blatf.write(seq+"\n")
 
-                    t="PRIMER_RIGHT_%d_SEQUENCE" % i
-                    if t in primer3results[snpid].keys():
-                        seq=primer3results[snpid][t]
-                        blatf.write(">"+snpid+"_"+t+"\n")
-                        blatf.write(seq+"\n")
+#                     t="PRIMER_RIGHT_%d_SEQUENCE" % i
+#                     if t in primer3results[snpid].keys():
+#                         seq=primer3results[snpid][t]
+#                         blatf.write(">"+snpid+"_"+t+"\n")
+#                         blatf.write(seq+"\n")
+
+
+primer3results = run_primer3(
+    snpdict,
+    blatqueryfile,
+    primer3file,
+    primer3,
+    config
+)
 
 ###############################################################################
 # Run BLAT on all primer options
