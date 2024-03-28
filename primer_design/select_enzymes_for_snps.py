@@ -247,6 +247,8 @@ for s in snpdict:
                 snpdict[s]['status']='drop'
                 snpdict[s]['drop_reason']='batch_too_small_from_enzyme_selection'
             else:
+                # enz_curr = enzymes_for_batch[snpdict[s]['batch']]
+
                 failedsnp_goodcuts='; '.join([e+':'+','.join([str(x) for x in good_cuts[e][s]]) for e in enz_curr])
                 failedsnp_badcuts='; '.join([e+':'+','.join([str(x) for x in bad_cuts[e][s]]) for e in enz_curr])
                 failedsnp_fragcuts='; '.join([e+':'+','.join([str(x) for x in fragend_cuts[e][s]]) for e in enz_curr])
