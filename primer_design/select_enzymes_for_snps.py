@@ -324,31 +324,6 @@ sys.stdout.flush()
 ###############################################################################
 # Process BLAT results
 # Counter for number of hits per sequence
-# blat_hits=dict()
-
-# with open(blatresultfile,'r') as blatr:
-#     for line in blatr:
-#         s=line.split()[9]
-#         s_split=s.split("_")
-#         snpid="_".join(s_split[0:3])
-#         leftright=s_split[4]
-#         primerid=s_split[5]
-#         gaps=int(line.split()[6])
-#         # Only count entry if score is X away from length of primer(query)
-#         plen=int(line.split()[10])
-#         score=int(line.split()[0])
-#         if (score>=(plen - config['blat_num_mismatches'])):
-#             print("%s - %d - %d - %d" % (s,plen,score,gaps))
-#             if snpid in blat_hits:
-#                 if leftright in blat_hits[snpid]:
-#                     blat_hits[snpid][leftright].update([primerid])
-#                 else:
-#                     blat_hits[snpid][leftright]=Counter()
-#                     blat_hits[snpid][leftright].update([primerid])
-#             else:
-#                 blat_hits[snpid]=dict()
-#                 blat_hits[snpid][leftright]=Counter()
-#                 blat_hits[snpid][leftright].update([primerid])
 
 blat_hits = process_blat_results(blatresultfile, config)
 
