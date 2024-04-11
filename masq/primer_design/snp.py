@@ -1034,3 +1034,147 @@ def filter_for_batch_size_duplication_and_no_primers(
                         'other_strand_same_snp_in_final_list'
 
     return snpdict
+
+
+def update_snpdict_with_primer_info(
+    snpdict: dict[str, dict[str, Any]],
+    primer3results: dict[str, Any],
+    blat_hits: dict[str, Any],
+    best_primer_pair: dict[str, tuple[str, str]]
+) -> dict[str, dict[str, Any]]:
+    """Update dict values for status based on primer results."""
+    print("Getting final snp info")
+
+    # Loop over current pass snps
+    # Update dict values for status based on primer results
+    for snpid, snpinfo in snpdict.items():
+        if snpinfo['status'] == 'pass':
+            # Get assigned primer id here
+            primerid = best_primer_pair[snpid]
+            print(f"Primer selected - {snpid}: {primerid}")
+            # Access dictionary of primer3 results to get relevant info
+            snpdict[snpid]['primerID'] = primerid
+            if snpdict[snpid]['strand'] == 'top':
+                print("top strand")
+                # Right primer is cut-adjacent
+                snpdict[snpid]['cutadj_primerseq'] = \
+                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}_SEQUENCE"]
+                snpdict[snpid]['downstream_primerseq'] = \
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}_SEQUENCE"]
+                snpdict[snpid]['cutadj_melting_temp'] = \
+                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}_TM"]
+                snpdict[snpid]['downstream_melting_temp'] = \
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}_TM"]
+                snpdict[snpid]['cutadj_primer_length'] = \
+                    len(primer3results[snpid][
+                        f"PRIMER_RIGHT_{primerid}_SEQUENCE"])
+                snpdict[snpid]['downstream_primer_length'] = \
+                    len(primer3results[snpid][
+                        f"PRIMER_LEFT_{primerid}_SEQUENCE"])
+                snpdict[snpid]['amplicon_length'] = \
+                    primer3results[snpid][
+                        f"PRIMER_PAIR_{primerid}_PRODUCT_SIZE"]
+                snpdict[snpid]['cutadj_blat_unique'] = \
+                    blat_hits[snpid]['RIGHT'][primerid]
+                snpdict[snpid]['downstream_blat_unique'] = \
+                    blat_hits[snpid]['LEFT'][primerid]
+                snpdict[snpid]['cutadj_primer_GC'] = \
+                    primer3results[snpid][
+                        f"PRIMER_RIGHT_{primerid}_GC_PERCENT"]
+                snpdict[snpid]['downstream_primer_GC'] = \
+                    primer3results[snpid][
+                        f"PRIMER_LEFT_{primerid}_GC_PERCENT"]
+                chrom = snpdict[snpid]['chrom']
+                start, stop = map(
+                    int,
+                    primer3results[snpid][
+                        f"PRIMER_RIGHT_{primerid}"].split(',')
+                )
+                rp_start = start + snpdict[snpid]['targetseq_pos1'] - stop + 2
+                rp_stop = start + snpdict[snpid]['targetseq_pos1'] + 1
+                snpdict[snpid]['cutadj_primer_coordinates'] = \
+                    f"{chrom}:{rp_start}-{rp_stop}"
+
+                start, stop = map(
+                    int,
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}"].split(',')
+                )
+                lp_start = start + snpdict[snpid]['targetseq_pos1'] + 1
+                lp_stop = start + stop + snpdict[snpid]['targetseq_pos1']
+
+                snpdict[snpid]['downstream_primer_coordinates'] = \
+                    f"{chrom}:{lp_start}-{lp_stop}"
+            else:
+                print("bottom strand")
+                # Left primer is cut-adjacent
+                snpdict[snpid]['cutadj_primerseq'] = \
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}_SEQUENCE"]
+                snpdict[snpid]['downstream_primerseq'] = \
+                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}_SEQUENCE"]
+                snpdict[snpid]['cutadj_melting_temp'] = \
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}_TM"]
+                snpdict[snpid]['downstream_melting_temp'] = \
+                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}_TM"]
+                snpdict[snpid]['cutadj_primer_length'] = \
+                    len(primer3results[snpid][
+                        f"PRIMER_LEFT_{primerid}_SEQUENCE"])
+                snpdict[snpid]['downstream_primer_length'] = \
+                    len(primer3results[snpid][
+                        f"PRIMER_RIGHT_{primerid}_SEQUENCE"])
+                snpdict[snpid]['amplicon_length'] = \
+                    primer3results[snpid][
+                        f"PRIMER_PAIR_{primerid}_PRODUCT_SIZE"]
+                snpdict[snpid]['cutadj_blat_unique'] = \
+                    blat_hits[snpid]['LEFT'][primerid]
+                snpdict[snpid]['downstream_blat_unique'] = \
+                    blat_hits[snpid]['RIGHT'][primerid]
+                snpdict[snpid]['cutadj_primer_GC'] = \
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}_GC_PERCENT"]
+                snpdict[snpid]['downstream_primer_GC'] = \
+                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}_GC_PERCENT"]
+                chrom = snpdict[snpid]['chrom']
+                start, stop = map(
+                    int,
+                    primer3results[snpid][f"PRIMER_LEFT_{primerid}"].split(',')
+                )
+                lp_start = start + snpdict[snpid]['targetseq_pos1'] + 1
+                lp_stop = start + stop + snpdict[snpid]['targetseq_pos1']
+                snpdict[snpid]['cutadj_primer_coordinates'] = \
+                    f"{chrom}:{lp_start}-{lp_stop}"
+
+                start, stop = map(
+                    int,
+                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}"].split(',')
+                )
+                rp_start = start + snpdict[snpid]['targetseq_pos1'] - stop + 2
+                rp_stop = start + snpdict[snpid]['targetseq_pos1'] + 1
+                snpdict[snpid]['downstream_primer_coordinates'] = \
+                    f"{chrom}:{rp_start}-{rp_stop}"
+
+            # Get full amplicon region coordinates
+            cutadj_region = Region.from_string(
+                snpdict[snpid]['cutadj_primer_coordinates']
+            )
+            downstream_region = Region.from_string(
+                snpdict[snpid]['downstream_primer_coordinates']
+            )
+            posa = min(
+                cutadj_region.start, cutadj_region.stop,
+                downstream_region.start, downstream_region.stop)
+            posb = max(
+                cutadj_region.start, cutadj_region.stop,
+                downstream_region.start, downstream_region.stop)
+
+            # check for indels in amplicon and add as warning:
+            indels = snpdict[snpid]['indel_positions']
+            for i in indels:
+                if (int(i) >= int(posa) and int(i) <= int(posb)):
+                    snpdict[snpid]['warnings'] = \
+                        'indel_in_amplicon_check_cut_sites'
+
+            # Add region to output
+            chrom = snpdict[snpid]['chrom']
+            snpdict[snpid]['full_region_coordinates'] = \
+                f"{chrom}:{posa}-{posb}"
+
+    return snpdict
