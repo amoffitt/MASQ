@@ -1,24 +1,24 @@
-import numpy as np
 import sys
 import os
 import pickle
-import subprocess
 import time
-from collections import Counter
-import yaml
 import datetime
 import pprint
-import copy
+
+from collections import Counter
+
+import yaml
+import numpy as np
 
 from masq.primer_design.enzymes import load_enzyme_descriptors, \
     process_enzyme_cut_sites
 from masq.primer_design.snp import process_snps, print_snp_dict, \
     filter_high_error_trinucleotides, check_snps_for_enzyme_cut_sites, \
-    snps_or_indels_in_region, check_snps_in_target_region_for_cut_sites, \
+    check_snps_in_target_region_for_cut_sites, \
     select_good_bad_cuts_for_enzyme_snp_pair, \
     greedy_select_enzimes, \
-    update_snplist_with_enzyme_selection, \
-    filter_for_batch_size_duplication_and_no_primers
+    filter_for_batch_size_duplication_and_no_primers, \
+    update_snpdict_with_primer_info
 from masq.primer_design.primer3_helpers import run_primer3
 from masq.primer_design.blat_helpers import run_blat, process_blat_results, \
     find_valid_pairs_of_primers_based_on_blat_hits
@@ -343,56 +343,7 @@ best_primer_pair = find_valid_pairs_of_primers_based_on_blat_hits(
 )
 
 ###############################################################################
-# print("Final filtering for batch size, duplicates, no primers found")
-# # Get batch size
-# batch_size_counter = Counter()
-# for snpid,snpinfo in snpdict.items():
-#     print(snpid)
-#     if snpinfo['status']=='pass':
-#         print("pass")
-#         if snpid in best_primer_pair:
-#             print("has primer pair")
-
-#             # Update batch size
-#             b = snpdict[snpid]['batch']
-#             batch_size_counter.update([b])
-#             # If we've reached max for this batch, drop remainder
-#             if batch_size_counter[b] > config['max_batch_size']:
-#                 snpdict[snpid]['status']='drop'
-#                 snpdict[snpid]['drop_reason']='max_batch_size_reached'
-#         # Drop anything without valid primer pair
-#         else:
-#             snpdict[snpid]['status']='drop'
-#             snpdict[snpid]['drop_reason']='SNP_in_primer'
-
-# # Find batches that are too small
-# dropbatch_small=[]
-# for b,batchsize in batch_size_counter.items():
-#     if batchsize < config['min_batch_size']:
-#         dropbatch_small.append(b)
-
-# # Drop small batches
-# for snpid,snpinfo in snpdict.items():
-#     print("SNP")
-#     print(snpid)
-#     if snpinfo['status']=='pass':
-#         b = snpdict[snpid]['batch']
-#         if b in dropbatch_small:
-#             snpdict[snpid]['status']='drop'
-#             snpdict[snpid]['drop_reason']='batch_size_too_small'
-
-# # Check for duplicates
-# passed_snps = [x for x in snpdict.keys() if snpdict[x]['status']=='pass']
-# for snpid,snpinfo in snpdict.items():
-#     print(snpid)
-#     if snpinfo['status']=='pass':
-#         # Check for same position on both strands in final list
-#         if snpdict[snpid]['strand']!=config['strand_preference']:
-#             opposite_snpid='_'.join(snpid.split('_')[0:2]+['top'])
-#             if opposite_snpid in passed_snps: # top strand for same snp is in final list, drop this one
-#                 snpdict[snpid]['status']='drop'
-#                 snpdict[snpid]['drop_reason']='other_strand_same_snp_in_final_list'
-
+# Final filtering for batch size, duplicates, no primers found
 #
 snpdict = filter_for_batch_size_duplication_and_no_primers(
     snpdict,
@@ -405,72 +356,79 @@ snpdict = filter_for_batch_size_duplication_and_no_primers(
 # Update dict values for status based on primer results
 print("Getting final snp info")
 
-for snpid,snpinfo in snpdict.items():
-    if snpinfo['status']=='pass':
-        # Get assigned primer id here
-        primerid = best_primer_pair[snpid]
-        print("Primer selected - %s: %s" % (snpid,primerid))
-        # Access dictionary of primer3 results to get relevant info
-        snpdict[snpid]['primerID']=primerid
-        if snpdict[snpid]['strand']=='top':
-            print("top strand")
-            # Right primer is cut-adjacent
-            snpdict[snpid]['cutadj_primerseq']=primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid]
-            snpdict[snpid]['downstream_primerseq']=primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid]
-            snpdict[snpid]['cutadj_melting_temp']=primer3results[snpid]["PRIMER_RIGHT_%s_TM" % primerid]
-            snpdict[snpid]['downstream_melting_temp']=primer3results[snpid]["PRIMER_LEFT_%s_TM" % primerid]
-            snpdict[snpid]['cutadj_primer_length']=len(primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid])
-            snpdict[snpid]['downstream_primer_length']=len(primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid])
-            snpdict[snpid]['amplicon_length']=primer3results[snpid]["PRIMER_PAIR_%s_PRODUCT_SIZE" % primerid]
-            snpdict[snpid]['cutadj_blat_unique']=blat_hits[snpid]['RIGHT'][primerid]
-            snpdict[snpid]['downstream_blat_unique']=blat_hits[snpid]['LEFT'][primerid]
-            snpdict[snpid]['cutadj_primer_GC']=primer3results[snpid]["PRIMER_RIGHT_%s_GC_PERCENT" % primerid]
-            snpdict[snpid]['downstream_primer_GC']=primer3results[snpid]["PRIMER_LEFT_%s_GC_PERCENT" % primerid]
-            snpdict[snpid]['cutadj_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-                int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1]) + 2,
-                int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0]) + snpdict[snpid]['targetseq_pos1'] + 1)
-            snpdict[snpid]['downstream_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-                int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1,
-                int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])+ snpdict[snpid]['targetseq_pos1'] )
-        else:
-            print("bottom strand")
-            # Left primer is cut-adjacent
-            snpdict[snpid]['cutadj_primerseq']=primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid]
-            snpdict[snpid]['downstream_primerseq']=primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid]
-            snpdict[snpid]['cutadj_melting_temp']=primer3results[snpid]["PRIMER_LEFT_%s_TM" % primerid]
-            snpdict[snpid]['downstream_melting_temp']=primer3results[snpid]["PRIMER_RIGHT_%s_TM" % primerid]
-            snpdict[snpid]['cutadj_primer_length']=len(primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid])
-            snpdict[snpid]['downstream_primer_length']=len(primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid])
-            snpdict[snpid]['amplicon_length']=primer3results[snpid]["PRIMER_PAIR_%s_PRODUCT_SIZE" % primerid]
-            snpdict[snpid]['cutadj_blat_unique']=blat_hits[snpid]['LEFT'][primerid]
-            snpdict[snpid]['downstream_blat_unique']=blat_hits[snpid]['RIGHT'][primerid]
-            snpdict[snpid]['cutadj_primer_GC']=primer3results[snpid]["PRIMER_LEFT_%s_GC_PERCENT" % primerid]
-            snpdict[snpid]['downstream_primer_GC']=primer3results[snpid]["PRIMER_RIGHT_%s_GC_PERCENT" % primerid]
-            snpdict[snpid]['cutadj_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-                int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1,
-                int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])+ snpdict[snpid]['targetseq_pos1'] )
-            snpdict[snpid]['downstream_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-                int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1]) + 2,
-                int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1)
+# for snpid,snpinfo in snpdict.items():
+#     if snpinfo['status']=='pass':
+#         # Get assigned primer id here
+#         primerid = best_primer_pair[snpid]
+#         print("Primer selected - %s: %s" % (snpid,primerid))
+#         # Access dictionary of primer3 results to get relevant info
+#         snpdict[snpid]['primerID']=primerid
+#         if snpdict[snpid]['strand']=='top':
+#             print("top strand")
+#             # Right primer is cut-adjacent
+#             snpdict[snpid]['cutadj_primerseq']=primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid]
+#             snpdict[snpid]['downstream_primerseq']=primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid]
+#             snpdict[snpid]['cutadj_melting_temp']=primer3results[snpid]["PRIMER_RIGHT_%s_TM" % primerid]
+#             snpdict[snpid]['downstream_melting_temp']=primer3results[snpid]["PRIMER_LEFT_%s_TM" % primerid]
+#             snpdict[snpid]['cutadj_primer_length']=len(primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid])
+#             snpdict[snpid]['downstream_primer_length']=len(primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid])
+#             snpdict[snpid]['amplicon_length']=primer3results[snpid]["PRIMER_PAIR_%s_PRODUCT_SIZE" % primerid]
+#             snpdict[snpid]['cutadj_blat_unique']=blat_hits[snpid]['RIGHT'][primerid]
+#             snpdict[snpid]['downstream_blat_unique']=blat_hits[snpid]['LEFT'][primerid]
+#             snpdict[snpid]['cutadj_primer_GC']=primer3results[snpid]["PRIMER_RIGHT_%s_GC_PERCENT" % primerid]
+#             snpdict[snpid]['downstream_primer_GC']=primer3results[snpid]["PRIMER_LEFT_%s_GC_PERCENT" % primerid]
+#             snpdict[snpid]['cutadj_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
+#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1]) + 2,
+#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0]) + snpdict[snpid]['targetseq_pos1'] + 1)
+#             snpdict[snpid]['downstream_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
+#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1,
+#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])+ snpdict[snpid]['targetseq_pos1'] )
+#         else:
+#             print("bottom strand")
+#             # Left primer is cut-adjacent
+#             snpdict[snpid]['cutadj_primerseq']=primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid]
+#             snpdict[snpid]['downstream_primerseq']=primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid]
+#             snpdict[snpid]['cutadj_melting_temp']=primer3results[snpid]["PRIMER_LEFT_%s_TM" % primerid]
+#             snpdict[snpid]['downstream_melting_temp']=primer3results[snpid]["PRIMER_RIGHT_%s_TM" % primerid]
+#             snpdict[snpid]['cutadj_primer_length']=len(primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid])
+#             snpdict[snpid]['downstream_primer_length']=len(primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid])
+#             snpdict[snpid]['amplicon_length']=primer3results[snpid]["PRIMER_PAIR_%s_PRODUCT_SIZE" % primerid]
+#             snpdict[snpid]['cutadj_blat_unique']=blat_hits[snpid]['LEFT'][primerid]
+#             snpdict[snpid]['downstream_blat_unique']=blat_hits[snpid]['RIGHT'][primerid]
+#             snpdict[snpid]['cutadj_primer_GC']=primer3results[snpid]["PRIMER_LEFT_%s_GC_PERCENT" % primerid]
+#             snpdict[snpid]['downstream_primer_GC']=primer3results[snpid]["PRIMER_RIGHT_%s_GC_PERCENT" % primerid]
+#             snpdict[snpid]['cutadj_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
+#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1,
+#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])+ snpdict[snpid]['targetseq_pos1'] )
+#             snpdict[snpid]['downstream_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
+#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1]) + 2,
+#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1)
 
-        # Get full amplicon region coordinates
-        posa=min(int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[0]),
-                 int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[1]),
-                 int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[0]),
-                 int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[1]))
-        posb=max(int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[0]),
-                 int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[1]),
-                 int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[0]),
-                 int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[1]))
+#         # Get full amplicon region coordinates
+#         posa=min(int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[0]),
+#                  int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[1]),
+#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[0]),
+#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[1]))
+#         posb=max(int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[0]),
+#                  int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[1]),
+#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[0]),
+#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[1]))
 
-        # check for indels in amplicon and add as warning:
-        indels = snpdict[snpid]['indel_positions']
-        for i in indels:
-            if (int(i)>=int(posa) and int(i)<=int(posb)):
-                snpdict[snpid]['warnings'] = 'indel_in_amplicon_check_cut_sites'
+#         # check for indels in amplicon and add as warning:
+#         indels = snpdict[snpid]['indel_positions']
+#         for i in indels:
+#             if (int(i)>=int(posa) and int(i)<=int(posb)):
+#                 snpdict[snpid]['warnings'] = 'indel_in_amplicon_check_cut_sites'
 
-        # Add region to output
-        snpdict[snpid]['full_region_coordinates']="%s:%s-%s" % (snpdict[snpid]['chrom'],str(posa),str(posb))
+#         # Add region to output
+#         snpdict[snpid]['full_region_coordinates']="%s:%s-%s" % (snpdict[snpid]['chrom'],str(posa),str(posb))
+
+snpdict = update_snpdict_with_primer_info(
+    snpdict,
+    primer3results,
+    blat_hits,
+    best_primer_pair
+)
 
 sys.stdout.flush()
 
