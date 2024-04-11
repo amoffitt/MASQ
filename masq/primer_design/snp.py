@@ -1,7 +1,7 @@
 import sys
 import logging
 from typing import Any, Union
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import pandas as pd
 import numpy as np
@@ -973,3 +973,64 @@ def update_snplist_with_enzyme_selection(
             sd['fragend_cuts'] = passedsnp_fragcuts
 
     print_snp_dict(snpdict, True)
+
+
+def filter_for_batch_size_duplication_and_no_primers(
+    snpdict: dict[str, dict[str, Any]],
+    best_primer_pair: dict[str, tuple[str, str]],
+    config: dict[str, Any]
+) -> dict[str, dict[str, Any]]:
+    # Filter for batch size
+    print("Final filtering for batch size, duplicates, no primers found")
+    # Get batch size
+    batch_size_counter = Counter()
+    for snpid, snpinfo in snpdict.items():
+        print(snpid)
+        if snpinfo['status'] == 'pass':
+            print("pass")
+            if snpid in best_primer_pair:
+                print("has primer pair")
+
+                # Update batch size
+                b = snpdict[snpid]['batch']
+                batch_size_counter.update([b])
+                # If we've reached max for this batch, drop remainder
+                if batch_size_counter[b] > config['max_batch_size']:
+                    snpdict[snpid]['status'] = 'drop'
+                    snpdict[snpid]['drop_reason'] = 'max_batch_size_reached'
+            # Drop anything without valid primer pair
+            else:
+                snpdict[snpid]['status'] = 'drop'
+                snpdict[snpid]['drop_reason'] = 'SNP_in_primer'
+
+    # Find batches that are too small
+    dropbatch_small = []
+    for b, batchsize in batch_size_counter.items():
+        if batchsize < config['min_batch_size']:
+            dropbatch_small.append(b)
+
+    # Drop small batches
+    for snpid, snpinfo in snpdict.items():
+        print("SNP")
+        print(snpid)
+        if snpinfo['status'] == 'pass':
+            b = snpdict[snpid]['batch']
+            if b in dropbatch_small:
+                snpdict[snpid]['status'] = 'drop'
+                snpdict[snpid]['drop_reason'] = 'batch_size_too_small'
+
+    # Check for duplicates
+    passed_snps = [x for x in snpdict.keys() if snpdict[x]['status'] == 'pass']
+    for snpid, snpinfo in snpdict.items():
+        print(snpid)
+        if snpinfo['status'] == 'pass':
+            # Check for same position on both strands in final list
+            if snpdict[snpid]['strand'] != config['strand_preference']:
+                opposite_snpid = '_'.join(snpid.split('_')[0:2]+['top'])
+                if opposite_snpid in passed_snps:
+                    # top strand for same snp is in final list, drop this one
+                    snpdict[snpid]['status'] = 'drop'
+                    snpdict[snpid]['drop_reason'] = \
+                        'other_strand_same_snp_in_final_list'
+
+    return snpdict
