@@ -1,6 +1,5 @@
 import sys
 import os
-import pickle
 import time
 import datetime
 import pprint
@@ -30,14 +29,14 @@ start0 = time.time()
 ###############################################################################
 # Load config file as first command line argument
 configfile = sys.argv[1]
-config = yaml.load(open(configfile), Loader=yaml.SafeLoader)
+with open(configfile) as infile:
+    config = yaml.load(infile, Loader=yaml.SafeLoader)
+
 pprint.pprint(config)
 sys.stdout.flush()
 ###############################################################################
 # Load reference genome
-print('loading reference genome pickle')
-seq_pickle = config['ref_pickle']
-seq_dic = pickle.load(open(seq_pickle, 'rb'))
+print('loading reference genome')
 ref_genome = ReferenceGenome(config['ref_genome'])
 ref_genome.open()
 
@@ -165,102 +164,6 @@ sys.stdout.flush()
 print("Collecting information on final snp and enzyme list")
 start = time.time()
 
-# for s in snpdict:
-#     if s in snps_curr:
-#         # Get enzyme list for this SNP's batch:
-#         enz_curr = enzymes_for_batch[snpdict[s]['batch']]
-
-#         # Find enzyme and cut site upstream
-#         sel_enz=''
-#         min_cut=snpdict[s]['pos']+1000
-#         max_cut=snpdict[s]['pos']-1000
-
-#         for e in enz_curr:
-#             cuts=good_cuts[e][s]
-#             if len(cuts)>0:
-#                 if snpdict[s]['strand']=='top':
-#                     m=min(cuts)
-#                     if m<min_cut:
-#                         min_cut=m
-#                         sel_enz=e
-#                 else:
-#                     m=max(cuts)
-#                     if m>max_cut:
-#                         max_cut=m
-#                         sel_enz=e
-
-#         snpdict[s]['enzyme']=sel_enz
-#         edesc = enzyme_descriptors[sel_enz]
-#         snpdict[s]['enzyme_recog_site']=edesc.recognition_site
-#         if snpdict[s]['strand']=='top':
-#             snpdict[s]['nearest_upstream_cut']=min_cut
-#         else:
-#             snpdict[s]['nearest_upstream_cut']=max_cut
-
-#         # Find closest cut site downstream (default 300)
-#         downstreamcut_min=snpdict[s]['pos'] + config['frag_end_range'][0]
-#         downstreamcut_max=snpdict[s]['pos'] - config['frag_end_range'][0]
-#         for e in enz_curr:
-#             cuts=fragend_cuts[e][s]
-#             if len(cuts)>0:
-#                 if snpdict[s]['strand']=='top':
-#                     m=max(cuts)
-#                     if m>downstreamcut_min:
-#                         downstreamcut_min=m
-#                 else:
-#                     m=min(cuts)
-#                     if m<downstreamcut_max:
-#                         downstreamcut_max=m
-
-#         if snpdict[s]['strand']=='top':
-#             snpdict[s]['nearest_downstream_cut']=downstreamcut_min
-#         else:
-#             snpdict[s]['nearest_downstream_cut']=downstreamcut_max
-
-#         # More information
-#         snpdict[s]['dist_from_mut_to_upstream_cut']=np.abs(snpdict[s]['nearest_upstream_cut']-snpdict[s]['pos'])
-#         pos1=min(snpdict[s]['nearest_upstream_cut'],snpdict[s]['nearest_downstream_cut'])
-#         pos2=max(snpdict[s]['nearest_upstream_cut'],snpdict[s]['nearest_downstream_cut'])
-#         if ( (pos2-pos1) < int(config['PRIMER_PRODUCT_SIZE_RANGE'][0])):
-#             snpdict[s]['status']='drop'
-#             snpdict[s]['drop_reason']='amplicon_too_short'
-#         else:
-#             snpdict[s]['target_seq_for_primer_search']=seq_dic[snpdict[s]['chrom']][pos1:pos2]
-#             snpdict[s]['targetseq_pos1']=pos1
-#             snpdict[s]['targetseq_pos2']=pos2
-#             snpdict[s]['targetseq_coordinates']="%s:%d-%d" % (snpdict[s]['chrom'],pos1+1,pos2)
-
-#             passedsnp_goodcuts='; '.join([e+':'+','.join([str(x) for x in good_cuts[e][s]]) for e in enz_curr])
-#             passedsnp_badcuts='; '.join([e+':'+','.join([str(x) for x in bad_cuts[e][s]]) for e in enz_curr])
-#             passedsnp_fragcuts='; '.join([e+':'+','.join([str(x) for x in fragend_cuts[e][s]]) for e in enz_curr])
-
-#             snpdict[s]['good_cuts']=passedsnp_goodcuts
-#             snpdict[s]['bad_cuts']=passedsnp_badcuts
-#             snpdict[s]['fragend_cuts']=passedsnp_fragcuts
-#     else:
-
-#         # Check if SNP had no chance - no enzyme that works with it alone
-#         if snpdict[s]['status']=='pass': # didn't fail earlier steps
-#             if s not in possible_enzyme_match_found.keys():
-#                 snpdict[s]['status']='drop'
-#                 snpdict[s]['drop_reason']='no_single_enzyme_matches'
-#             elif s in too_small_batch:
-#                 snpdict[s]['status']='drop'
-#                 snpdict[s]['drop_reason']='batch_too_small_from_enzyme_selection'
-#             else:
-#                 # enz_curr = enzymes_for_batch[snpdict[s]['batch']]
-
-#                 failedsnp_goodcuts='; '.join([e+':'+','.join([str(x) for x in good_cuts[e][s]]) for e in enz_curr])
-#                 failedsnp_badcuts='; '.join([e+':'+','.join([str(x) for x in bad_cuts[e][s]]) for e in enz_curr])
-#                 failedsnp_fragcuts='; '.join([e+':'+','.join([str(x) for x in fragend_cuts[e][s]]) for e in enz_curr])
-#                 #TODO different enzymes enz-curr for different batches
-
-#                 snpdict[s]['good_cuts']=failedsnp_goodcuts
-#                 snpdict[s]['bad_cuts']=failedsnp_badcuts
-#                 snpdict[s]['fragend_cuts']=failedsnp_fragcuts
-#                 snpdict[s]['status']='drop'
-#                 snpdict[s]['drop_reason']='enzyme_cut_compatibility'
-
 update_snplist_with_enzyme_selection(
     snpdict,
     snps_curr,
@@ -296,8 +199,8 @@ print(blatresultfile)
 # make output directory if it doesn't exist
 os.makedirs(os.path.dirname(primer3file), exist_ok=True)
 
-#primer3 = config['primer3']
-primer3 = "primer3_core"  # if installed in environment or on path
+# should be installed in environment or on path
+primer3 = config.get('primer3', "primer3_core")
 
 print("Running primer3")
 sys.stdout.flush()
