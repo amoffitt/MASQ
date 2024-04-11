@@ -10,6 +10,7 @@ import pysam
 
 from masq.utils.reference_genome import ReferenceGenome
 from masq.utils.regions import Region
+from masq.utils.io import tabprint
 from masq.utils.seqs import reverse_complement, check_sequence_for_cut_site, \
     base2int, int2base
 from masq.primer_design.enzymes import EnzymeDescriptor
@@ -1178,3 +1179,41 @@ def update_snpdict_with_primer_info(
                 f"{chrom}:{posa}-{posb}"
 
     return snpdict
+
+
+def store_snp_result(
+    outputfile: str,
+    snpdict: dict[str, dict[str, Any]],
+) -> None:
+
+    # Manually set output order
+    header = [
+        'status', 'drop_reason', 'batch', 'full_region_coordinates',
+        'full_region_seq', 'chrom', 'pos', 'strand', 'ref_trinuc',
+        'alt_trinuc', 'enzyme', 'enzyme_recog_site',
+        'amplicon_length', 'dist_from_mut_to_upstream_cut',
+        'nearest_downstream_cut', 'nearest_upstream_cut',
+        'good_cuts', 'bad_cuts', 'fragend_cuts',
+        'targetseq_coordinates', 'target_seq_for_primer_search',
+        'left_primer_explanation',
+        'right_primer_explanation','primerID',
+        'cutadj_primer_coordinates', 'cutadj_primerseq',
+        'cutadj_primer_length',
+        'cutadj_melting_temp',
+        'cutadj_primer_GC', 'cutadj_blat_unique',
+        'downstream_primer_coordinates', 'downstream_primerseq',
+        'downstream_primer_length', 'downstream_melting_temp',
+        'downstream_primer_GC', 'downstream_blat_unique',
+        'warnings'
+    ]
+
+    with open(outputfile, 'w') as f:
+        f.write(tabprint(['SNP_ID'] + header) + "\n")
+        for snpid, snpinfo in snpdict.items():
+            f.write(snpid+"\t")
+            for h in header:
+                if h in snpinfo:
+                    f.write(str(snpinfo[h])+"\t")
+                else:
+                    f.write("."+"\t")
+            f.write("\n")

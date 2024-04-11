@@ -5,6 +5,7 @@ from collections import Counter
 from masq.primer_design.primer3_helpers import get_primer_coordinates
 from masq.primer_design.snp import snps_or_indels_in_region
 from masq.utils.reference_genome import ReferenceGenome
+from masq.utils.regions import Region
 
 
 def run_blat(
@@ -231,3 +232,61 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
             snpdict[snpid]['drop_reason'] = 'blat_hits'
 
     return best_primer_pair
+
+
+def run_full_blat_query(
+    blatqueryfile: str,
+    blatresultfile: str,
+    snpdict: dict[str, dict[str, Any]],
+    ref_genome: ReferenceGenome,
+    config: dict[str, Any]
+) -> dict[str, Any]:
+
+    with open(blatqueryfile, 'w') as blatf:
+        passed_snps: list[str] = [
+            snpid for snpid, snpinfo in snpdict.items()
+            if snpinfo['status'] == 'pass'
+        ]
+        for snpid, snpinfo in snpdict.items():
+            print(snpid)
+            if snpinfo['status'] == 'pass':
+                full_region = Region.from_string(
+                    snpdict[snpid]['full_region_coordinates'])
+                # GET FULL LENGTH SEQ
+                full_region_seq = \
+                    ref_genome.get_sequence(
+                        full_region.chrom,
+                        full_region.start,
+                        full_region.stop)
+                # save seq to dictionary
+                snpdict[snpid]['full_region_seq'] = full_region_seq
+                # Write to blat query file
+                blatf.write(">"+snpid+"\n")
+                blatf.write(full_region_seq+"\n")
+
+    # Run full length blat on all sequences at once
+    print("Running BLAT on full length sequences for all SNPs")
+    run_blat(
+        blatqueryfile,
+        blatresultfile,
+        config,
+        'full_length')
+
+    # Process blat results
+    blat_hits: dict[str, Any] = Counter()
+    with open(blatresultfile, 'r') as blatr:
+        for line in blatr:
+            snpid = line.split()[9]
+
+            gaps = int(line.split()[6])
+            plen = int(line.split()[10])
+            score = int(line.split()[0])
+
+            # only count those that pass min score
+            if score >= config['minScore_full']:
+                blat_hits.update([snpid])
+                if blat_hits[snpid] > config['blat_full_num_hits']:
+                    snpdict[snpid]['status'] = 'drop'
+                    snpdict[snpid]['drop_reason'] = 'full_len_blat'
+    print("Done with full length blat")
+    return blat_hits
