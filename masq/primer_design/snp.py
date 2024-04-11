@@ -855,26 +855,6 @@ def update_snplist_with_enzyme_selection(
                 sd['status'] = 'drop'
                 sd['drop_reason'] = 'batch_too_small_from_enzyme_selection'
             else:
-                # enz_curr = enzymes_for_batch[snpdict[s]['batch']]
-                failedsnp_goodcuts = '; '.join([
-                    e + ':' + ','.join([
-                        str(x) for x in good_cuts[e][s]
-                    ]) for e in enz_curr
-                ])
-                failedsnp_badcuts = '; '.join([
-                    e + ':' + ','.join([
-                        str(x) for x in bad_cuts[e][s]
-                    ]) for e in enz_curr
-                ])
-                failedsnp_fragcuts = '; '.join([
-                    e + ':' + ','.join([
-                        str(x) for x in fragend_cuts[e][s]
-                    ]) for e in enz_curr
-                ])
-                # TODO different enzymes enz-curr for different batches
-                sd['good_cuts'] = failedsnp_goodcuts
-                sd['bad_cuts'] = failedsnp_badcuts
-                sd['fragend_cuts'] = failedsnp_fragcuts
                 sd['status'] = 'drop'
                 sd['drop_reason'] = 'enzyme_cut_compatibility'
             continue
@@ -917,12 +897,14 @@ def update_snplist_with_enzyme_selection(
             if len(cuts) > 0:
                 if sd['strand'] == 'top':
                     m = max(cuts)
-                    if m > downstreamcut_min:
-                        downstreamcut_min = m
+                    downstreamcut_min = max(downstreamcut_min, m)
+                    # if m > downstreamcut_min:
+                    #     downstreamcut_min = m
                 else:
                     m = min(cuts)
-                    if m < downstreamcut_max:
-                        downstreamcut_max = m
+                    downstreamcut_max = min(downstreamcut_max, m)
+                    # if m < downstreamcut_max:
+                    #     downstreamcut_max = m
 
         if sd['strand'] == 'top':
             sd['nearest_downstream_cut'] = downstreamcut_min
@@ -940,7 +922,7 @@ def update_snplist_with_enzyme_selection(
             sd['nearest_upstream_cut'],
             sd['nearest_downstream_cut']
         )
-        if ((pos2-pos1) < int(config['PRIMER_PRODUCT_SIZE_RANGE'][0])):
+        if (pos2-pos1) < int(config['PRIMER_PRODUCT_SIZE_RANGE'][0]):
             sd['status'] = 'drop'
             sd['drop_reason'] = 'amplicon_too_short'
         else:
@@ -984,7 +966,7 @@ def filter_for_batch_size_duplication_and_no_primers(
     # Filter for batch size
     print("Final filtering for batch size, duplicates, no primers found")
     # Get batch size
-    batch_size_counter = Counter()
+    batch_size_counter: dict[str, Any] = Counter()
     for snpid, snpinfo in snpdict.items():
         print(snpid)
         if snpinfo['status'] == 'pass':
@@ -1132,7 +1114,8 @@ def update_snpdict_with_primer_info(
                 snpdict[snpid]['cutadj_primer_GC'] = \
                     primer3results[snpid][f"PRIMER_LEFT_{primerid}_GC_PERCENT"]
                 snpdict[snpid]['downstream_primer_GC'] = \
-                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}_GC_PERCENT"]
+                    primer3results[snpid][
+                        f"PRIMER_RIGHT_{primerid}_GC_PERCENT"]
                 chrom = snpdict[snpid]['chrom']
                 start, stop = map(
                     int,
@@ -1145,7 +1128,8 @@ def update_snpdict_with_primer_info(
 
                 start, stop = map(
                     int,
-                    primer3results[snpid][f"PRIMER_RIGHT_{primerid}"].split(',')
+                    primer3results[snpid][
+                        f"PRIMER_RIGHT_{primerid}"].split(',')
                 )
                 rp_start = start + snpdict[snpid]['targetseq_pos1'] - stop + 2
                 rp_stop = start + snpdict[snpid]['targetseq_pos1'] + 1
@@ -1196,7 +1180,7 @@ def store_snpdict_final(
         'good_cuts', 'bad_cuts', 'fragend_cuts',
         'targetseq_coordinates', 'target_seq_for_primer_search',
         'left_primer_explanation',
-        'right_primer_explanation','primerID',
+        'right_primer_explanation', 'primerID',
         'cutadj_primer_coordinates', 'cutadj_primerseq',
         'cutadj_primer_length',
         'cutadj_melting_temp',
