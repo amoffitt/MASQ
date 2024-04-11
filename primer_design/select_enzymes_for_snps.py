@@ -5,8 +5,6 @@ import time
 import datetime
 import pprint
 
-from collections import Counter
-
 import yaml
 import numpy as np
 
@@ -18,10 +16,10 @@ from masq.primer_design.snp import process_snps, print_snp_dict, \
     select_good_bad_cuts_for_enzyme_snp_pair, \
     greedy_select_enzimes, \
     filter_for_batch_size_duplication_and_no_primers, \
-    update_snpdict_with_primer_info
+    update_snpdict_with_primer_info, store_snp_result
 from masq.primer_design.primer3_helpers import run_primer3
 from masq.primer_design.blat_helpers import run_blat, process_blat_results, \
-    find_valid_pairs_of_primers_based_on_blat_hits
+    find_valid_pairs_of_primers_based_on_blat_hits, run_full_blat_query
 from masq.utils.reference_genome import ReferenceGenome
 
 from primer_design_functions import *
@@ -356,73 +354,6 @@ snpdict = filter_for_batch_size_duplication_and_no_primers(
 # Update dict values for status based on primer results
 print("Getting final snp info")
 
-# for snpid,snpinfo in snpdict.items():
-#     if snpinfo['status']=='pass':
-#         # Get assigned primer id here
-#         primerid = best_primer_pair[snpid]
-#         print("Primer selected - %s: %s" % (snpid,primerid))
-#         # Access dictionary of primer3 results to get relevant info
-#         snpdict[snpid]['primerID']=primerid
-#         if snpdict[snpid]['strand']=='top':
-#             print("top strand")
-#             # Right primer is cut-adjacent
-#             snpdict[snpid]['cutadj_primerseq']=primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid]
-#             snpdict[snpid]['downstream_primerseq']=primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid]
-#             snpdict[snpid]['cutadj_melting_temp']=primer3results[snpid]["PRIMER_RIGHT_%s_TM" % primerid]
-#             snpdict[snpid]['downstream_melting_temp']=primer3results[snpid]["PRIMER_LEFT_%s_TM" % primerid]
-#             snpdict[snpid]['cutadj_primer_length']=len(primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid])
-#             snpdict[snpid]['downstream_primer_length']=len(primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid])
-#             snpdict[snpid]['amplicon_length']=primer3results[snpid]["PRIMER_PAIR_%s_PRODUCT_SIZE" % primerid]
-#             snpdict[snpid]['cutadj_blat_unique']=blat_hits[snpid]['RIGHT'][primerid]
-#             snpdict[snpid]['downstream_blat_unique']=blat_hits[snpid]['LEFT'][primerid]
-#             snpdict[snpid]['cutadj_primer_GC']=primer3results[snpid]["PRIMER_RIGHT_%s_GC_PERCENT" % primerid]
-#             snpdict[snpid]['downstream_primer_GC']=primer3results[snpid]["PRIMER_LEFT_%s_GC_PERCENT" % primerid]
-#             snpdict[snpid]['cutadj_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1]) + 2,
-#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0]) + snpdict[snpid]['targetseq_pos1'] + 1)
-#             snpdict[snpid]['downstream_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1,
-#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])+ snpdict[snpid]['targetseq_pos1'] )
-#         else:
-#             print("bottom strand")
-#             # Left primer is cut-adjacent
-#             snpdict[snpid]['cutadj_primerseq']=primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid]
-#             snpdict[snpid]['downstream_primerseq']=primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid]
-#             snpdict[snpid]['cutadj_melting_temp']=primer3results[snpid]["PRIMER_LEFT_%s_TM" % primerid]
-#             snpdict[snpid]['downstream_melting_temp']=primer3results[snpid]["PRIMER_RIGHT_%s_TM" % primerid]
-#             snpdict[snpid]['cutadj_primer_length']=len(primer3results[snpid]["PRIMER_LEFT_%s_SEQUENCE" % primerid])
-#             snpdict[snpid]['downstream_primer_length']=len(primer3results[snpid]["PRIMER_RIGHT_%s_SEQUENCE" % primerid])
-#             snpdict[snpid]['amplicon_length']=primer3results[snpid]["PRIMER_PAIR_%s_PRODUCT_SIZE" % primerid]
-#             snpdict[snpid]['cutadj_blat_unique']=blat_hits[snpid]['LEFT'][primerid]
-#             snpdict[snpid]['downstream_blat_unique']=blat_hits[snpid]['RIGHT'][primerid]
-#             snpdict[snpid]['cutadj_primer_GC']=primer3results[snpid]["PRIMER_LEFT_%s_GC_PERCENT" % primerid]
-#             snpdict[snpid]['downstream_primer_GC']=primer3results[snpid]["PRIMER_RIGHT_%s_GC_PERCENT" % primerid]
-#             snpdict[snpid]['cutadj_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1,
-#                 int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[0])+ int(primer3results[snpid]["PRIMER_LEFT_%s" % primerid].split(',')[1])+ snpdict[snpid]['targetseq_pos1'] )
-#             snpdict[snpid]['downstream_primer_coordinates']="%s:%d-%d" % (snpdict[snpid]['chrom'],
-#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] - int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[1]) + 2,
-#                 int(primer3results[snpid]["PRIMER_RIGHT_%s" % primerid].split(',')[0])+ snpdict[snpid]['targetseq_pos1'] + 1)
-
-#         # Get full amplicon region coordinates
-#         posa=min(int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[0]),
-#                  int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[1]),
-#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[0]),
-#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[1]))
-#         posb=max(int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[0]),
-#                  int(snpdict[snpid]['cutadj_primer_coordinates'].split(':')[1].split('-')[1]),
-#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[0]),
-#                  int(snpdict[snpid]['downstream_primer_coordinates'].split(':')[1].split('-')[1]))
-
-#         # check for indels in amplicon and add as warning:
-#         indels = snpdict[snpid]['indel_positions']
-#         for i in indels:
-#             if (int(i)>=int(posa) and int(i)<=int(posb)):
-#                 snpdict[snpid]['warnings'] = 'indel_in_amplicon_check_cut_sites'
-
-#         # Add region to output
-#         snpdict[snpid]['full_region_coordinates']="%s:%s-%s" % (snpdict[snpid]['chrom'],str(posa),str(posb))
-
 snpdict = update_snpdict_with_primer_info(
     snpdict,
     primer3results,
@@ -436,76 +367,72 @@ sys.stdout.flush()
 # Full length BLAT filter
 blatqueryfile=config['output_folder']+"blat_query.full_length.fa."+config['sample']+"."+date+".txt"
 blatresultfile=config['output_folder']+"blat_results.full_length.out."+config['sample']+"."+date+".txt"
-with open(blatqueryfile,'w') as blatf:
-    passed_snps = [x for x in snpdict.keys() if snpdict[x]['status']=='pass']
-    for snpid,snpinfo in snpdict.items():
-        print(snpid)
-        if snpinfo['status']=='pass':
-            full_region=snpdict[snpid]['full_region_coordinates']
-            # GET FULL LENGTH SEQ
-            full_region_seq = seq_dic[full_region.split(':')[0]][int(full_region.split(':')[1].split('-')[0]):int(full_region.split(':')[1].split('-')[1])]
-            # save seq to dictionary
-            snpdict[snpid]['full_region_seq']=full_region_seq
-            # Write to blat query file
-            blatf.write(">"+snpid+"\n")
-            blatf.write(full_region_seq+"\n")
 
-# Run full length blat on all sequences at once
-start=time.time()
-print("Running BLAT on full length sequences for all SNPs")
-sys.stdout.flush()
-run_blat(blatqueryfile,blatresultfile,config,'full_length')
-end = time.time(); print("Time elapsed: %0.2f" % (end-start))
-sys.stdout.flush()
+# with open(blatqueryfile,'w') as blatf:
+#     passed_snps = [x for x in snpdict.keys() if snpdict[x]['status']=='pass']
+#     for snpid,snpinfo in snpdict.items():
+#         print(snpid)
+#         if snpinfo['status']=='pass':
+#             full_region=snpdict[snpid]['full_region_coordinates']
+#             # GET FULL LENGTH SEQ
+#             full_region_seq = seq_dic[full_region.split(':')[0]][int(full_region.split(':')[1].split('-')[0]):int(full_region.split(':')[1].split('-')[1])]
+#             # save seq to dictionary
+#             snpdict[snpid]['full_region_seq']=full_region_seq
+#             # Write to blat query file
+#             blatf.write(">"+snpid+"\n")
+#             blatf.write(full_region_seq+"\n")
 
-# Process blat results
-blat_hits=Counter()
-with open(blatresultfile,'r') as blatr:
-    for line in blatr:
-        snpid=line.split()[9]
+# # Run full length blat on all sequences at once
+# start=time.time()
+# print("Running BLAT on full length sequences for all SNPs")
+# sys.stdout.flush()
+# run_blat(blatqueryfile,blatresultfile,config,'full_length')
+# end = time.time(); print("Time elapsed: %0.2f" % (end-start))
+# sys.stdout.flush()
 
-        gaps=int(line.split()[6])
-        plen=int(line.split()[10])
-        score=int(line.split()[0])
+# # Process blat results
+# blat_hits=Counter()
+# with open(blatresultfile,'r') as blatr:
+#     for line in blatr:
+#         snpid=line.split()[9]
 
-        # only count those that pass min score
-        if score>=config['minScore_full']:
-            blat_hits.update([snpid])
-            if blat_hits[snpid]>config['blat_full_num_hits']:
-                snpdict[snpid]['status']='drop'
-                snpdict[snpid]['drop_reason']='full_len_blat'
-print("Done with full length blat")
+#         gaps=int(line.split()[6])
+#         plen=int(line.split()[10])
+#         score=int(line.split()[0])
+
+#         # only count those that pass min score
+#         if score>=config['minScore_full']:
+#             blat_hits.update([snpid])
+#             if blat_hits[snpid]>config['blat_full_num_hits']:
+#                 snpdict[snpid]['status']='drop'
+#                 snpdict[snpid]['drop_reason']='full_len_blat'
+# print("Done with full length blat")
+
+blat_hits = run_full_blat_query(
+    blatqueryfile,
+    blatresultfile,
+    snpdict,
+    ref_genome,
+    config
+)
 sys.stdout.flush()
 
 ###############################################################################
 # Print final SNP results
-print_snp_dict(snpdict,False)
+print_snp_dict(snpdict, False)
 print("")
 # Write to an output file
 # One row per SNP
 # date=datetime.datetime.now().strftime('%Y-%m-%d.%H-%M')
-outputfile=config['output_folder']+"snp_primer_design_results."+config['sample']+"."+date+".txt"
+outputfile = \
+    config['output_folder'] + \
+    "snp_primer_design_results." + \
+    config['sample'] + "." + date + ".txt"
 
-# Manually set output order
-header=['status','drop_reason','batch','full_region_coordinates','full_region_seq','chrom','pos','strand','ref_trinuc','alt_trinuc','enzyme','enzyme_recog_site',
-    'amplicon_length','dist_from_mut_to_upstream_cut','nearest_downstream_cut','nearest_upstream_cut',
-    'good_cuts','bad_cuts','fragend_cuts','targetseq_coordinates','target_seq_for_primer_search','left_primer_explanation',
-    'right_primer_explanation','primerID','cutadj_primer_coordinates','cutadj_primerseq','cutadj_primer_length','cutadj_melting_temp',
-    'cutadj_primer_GC','cutadj_blat_unique','downstream_primer_coordinates','downstream_primerseq','downstream_primer_length','downstream_melting_temp',
-    'downstream_primer_GC','downstream_blat_unique','warnings']
-
-with open(outputfile,'w') as f:
-    f.write(tabprint(['SNP_ID']+header)+"\n")
-    for snpid,snpinfo in snpdict.items():
-        f.write(snpid+"\t")
-        for h in header:
-            if h in snpinfo:
-                f.write(str(snpinfo[h])+"\t")
-            else:
-                f.write("."+"\t")
-        f.write("\n")
+store_snp_result(outputfile, snpdict)
 
 ###############################################################################
 # Final time
-end = time.time(); print("Time elapsed for entire script: %0.2f" % (end-start0))
+end = time.time()
+print("Time elapsed for entire script: %0.2f" % (end-start0))
 sys.stdout.flush()
