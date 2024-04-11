@@ -1181,7 +1181,7 @@ def update_snpdict_with_primer_info(
     return snpdict
 
 
-def store_snp_result(
+def store_snpdict_final(
     outputfile: str,
     snpdict: dict[str, dict[str, Any]],
 ) -> None:

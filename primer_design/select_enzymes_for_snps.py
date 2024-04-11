@@ -16,13 +16,11 @@ from masq.primer_design.snp import process_snps, print_snp_dict, \
     select_good_bad_cuts_for_enzyme_snp_pair, \
     greedy_select_enzimes, \
     filter_for_batch_size_duplication_and_no_primers, \
-    update_snpdict_with_primer_info, store_snp_result
+    update_snpdict_with_primer_info, store_snpdict_final
 from masq.primer_design.primer3_helpers import run_primer3
 from masq.primer_design.blat_helpers import run_blat, process_blat_results, \
     find_valid_pairs_of_primers_based_on_blat_hits, run_full_blat_query
 from masq.utils.reference_genome import ReferenceGenome
-
-from primer_design_functions import *
 
 
 ###############################################################################
@@ -365,48 +363,16 @@ sys.stdout.flush()
 
 ###############################################################################
 # Full length BLAT filter
-blatqueryfile=config['output_folder']+"blat_query.full_length.fa."+config['sample']+"."+date+".txt"
-blatresultfile=config['output_folder']+"blat_results.full_length.out."+config['sample']+"."+date+".txt"
-
-# with open(blatqueryfile,'w') as blatf:
-#     passed_snps = [x for x in snpdict.keys() if snpdict[x]['status']=='pass']
-#     for snpid,snpinfo in snpdict.items():
-#         print(snpid)
-#         if snpinfo['status']=='pass':
-#             full_region=snpdict[snpid]['full_region_coordinates']
-#             # GET FULL LENGTH SEQ
-#             full_region_seq = seq_dic[full_region.split(':')[0]][int(full_region.split(':')[1].split('-')[0]):int(full_region.split(':')[1].split('-')[1])]
-#             # save seq to dictionary
-#             snpdict[snpid]['full_region_seq']=full_region_seq
-#             # Write to blat query file
-#             blatf.write(">"+snpid+"\n")
-#             blatf.write(full_region_seq+"\n")
-
-# # Run full length blat on all sequences at once
-# start=time.time()
-# print("Running BLAT on full length sequences for all SNPs")
-# sys.stdout.flush()
-# run_blat(blatqueryfile,blatresultfile,config,'full_length')
-# end = time.time(); print("Time elapsed: %0.2f" % (end-start))
-# sys.stdout.flush()
-
-# # Process blat results
-# blat_hits=Counter()
-# with open(blatresultfile,'r') as blatr:
-#     for line in blatr:
-#         snpid=line.split()[9]
-
-#         gaps=int(line.split()[6])
-#         plen=int(line.split()[10])
-#         score=int(line.split()[0])
-
-#         # only count those that pass min score
-#         if score>=config['minScore_full']:
-#             blat_hits.update([snpid])
-#             if blat_hits[snpid]>config['blat_full_num_hits']:
-#                 snpdict[snpid]['status']='drop'
-#                 snpdict[snpid]['drop_reason']='full_len_blat'
-# print("Done with full length blat")
+blatqueryfile = \
+    config['output_folder'] + \
+    "blat_query.full_length.fa." + \
+    config['sample'] + \
+    "." + date + ".txt"
+blatresultfile = \
+    config['output_folder'] + \
+    "blat_results.full_length.out." + \
+    config['sample'] + \
+    "." + date + ".txt"
 
 blat_hits = run_full_blat_query(
     blatqueryfile,
@@ -429,10 +395,10 @@ outputfile = \
     "snp_primer_design_results." + \
     config['sample'] + "." + date + ".txt"
 
-store_snp_result(outputfile, snpdict)
+store_snpdict_final(outputfile, snpdict)
 
 ###############################################################################
 # Final time
 end = time.time()
-print("Time elapsed for entire script: %0.2f" % (end-start0))
+print(f"Time elapsed for entire script: {(end - start0):0.2f}")
 sys.stdout.flush()
