@@ -118,13 +118,13 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
         perfectpairs = list(set(perfectleft).intersection(perfectright))
         if len(perfectpairs) > 0:
             valid_primer_pairs[snpid] = perfectpairs
-            ps = valid_primer_pairs[snpid]
+            ps = list(valid_primer_pairs[snpid])
             # check perfect pairs for snps in primers before skipping next step
             for p in ps:
                 (primerstring_l, primerstring_r) = get_primer_coordinates(
                     p, snpid, primer3results, snpdict)
-                [snp_positions_l, seq_positions,
-                 snp_alt_bases, region_ref_seq] = \
+                [snp_positions_l, _seq_positions,
+                 _snp_alt_bases, _region_ref_seq] = \
                     snps_or_indels_in_region(
                         bam, primerstring_l,
                         ref_genome,
@@ -133,8 +133,8 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
                         indelaf_cutoff=config['indelaf_cutoff'],
                         var_count_cutoff=config['var_count_cutoff'],
                         indel_count_cutoff=config['indel_count_cutoff'])
-                [snp_positions_r, seq_positions,
-                 snp_alt_bases, region_ref_seq] = \
+                [snp_positions_r, _seq_positions,
+                 _snp_alt_bases, _region_ref_seq] = \
                     snps_or_indels_in_region(
                         bam, primerstring_r,
                         ref_genome,
@@ -187,8 +187,8 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
             for p in ps:
                 (primerstring_l, primerstring_r) = \
                     get_primer_coordinates(p, snpid, primer3results, snpdict)
-                [snp_positions_l, seq_positions,
-                 snp_alt_bases, region_ref_seq] = \
+                [snp_positions_l, _seq_positions,
+                 _snp_alt_bases, _region_ref_seq] = \
                     snps_or_indels_in_region(
                         bam, primerstring_l,
                         ref_genome,
@@ -197,8 +197,8 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
                         indelaf_cutoff=config['indelaf_cutoff'],
                         var_count_cutoff=config['var_count_cutoff'],
                         indel_count_cutoff=config['indel_count_cutoff'])
-                [snp_positions_r, seq_positions,
-                 snp_alt_bases, region_ref_seq] = \
+                [snp_positions_r, _seq_positions,
+                 _snp_alt_bases, _region_ref_seq] = \
                     snps_or_indels_in_region(
                         bam, primerstring_r,
                         ref_genome,
