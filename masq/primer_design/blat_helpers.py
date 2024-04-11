@@ -56,8 +56,8 @@ def process_blat_results(
             # Only count entry if score is X away from length of primer(query)
             plen = int(line.split()[10])
             score = int(line.split()[0])
-            if (score >= (plen - config['blat_num_mismatches'])):
-                print("%s - %d - %d - %d" % (s, plen, score, gaps))
+            if score >= (plen - config['blat_num_mismatches']):
+                print(f"{s} - {plen} - {score} - {gaps}")
                 if snpid in blat_hits:
                     if leftright in blat_hits[snpid]:
                         blat_hits[snpid][leftright].update([primerid])
@@ -121,31 +121,33 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
             ps = valid_primer_pairs[snpid]
             # check perfect pairs for snps in primers before skipping next step
             for p in ps:
-                (primerstringL, primerstringR) = get_primer_coordinates(
+                (primerstring_l, primerstring_r) = get_primer_coordinates(
                     p, snpid, primer3results, snpdict)
-                [snp_positionsL, seq_positions, snp_alt_bases, region_ref_seq] = \
+                [snp_positions_l, seq_positions,
+                 snp_alt_bases, region_ref_seq] = \
                     snps_or_indels_in_region(
-                        bam, primerstringL,
+                        bam, primerstring_l,
                         ref_genome,
                         basequal_cutoff=config['basequal_cutoff'],
                         vaf_cutoff=config['vaf_cutoff'],
                         indelaf_cutoff=config['indelaf_cutoff'],
                         var_count_cutoff=config['var_count_cutoff'],
                         indel_count_cutoff=config['indel_count_cutoff'])
-                [snp_positionsR, seq_positions, snp_alt_bases, region_ref_seq] = \
+                [snp_positions_r, seq_positions,
+                 snp_alt_bases, region_ref_seq] = \
                     snps_or_indels_in_region(
-                        bam, primerstringR,
+                        bam, primerstring_r,
                         ref_genome,
                         basequal_cutoff=config['basequal_cutoff'],
                         vaf_cutoff=config['vaf_cutoff'],
                         indelaf_cutoff=config['indelaf_cutoff'],
                         var_count_cutoff=config['var_count_cutoff'],
                         indel_count_cutoff=config['indel_count_cutoff'])
-                if (len(snp_positionsL) > 0) or (len(snp_positionsR) > 0):
+                if (len(snp_positions_l) > 0) or (len(snp_positions_r) > 0):
                     valid_primer_pairs[snpid].remove(p)
                     print(f"Found SNP in primer pair: {p}")
-                    print(f"Left primer: {primerstringL}")
-                    print(f"Right primer: {primerstringR}")
+                    print(f"Left primer: {primerstring_l}")
+                    print(f"Right primer: {primerstring_r}")
             if len(valid_primer_pairs[snpid]) > 0:
                 perfectfound = True
 
@@ -183,30 +185,32 @@ def find_valid_pairs_of_primers_based_on_blat_hits(
             # Check valid primer pairs for snps in primer, drop if SNP in
             # primer
             for p in ps:
-                (primerstringL, primerstringR) = \
+                (primerstring_l, primerstring_r) = \
                     get_primer_coordinates(p, snpid, primer3results, snpdict)
-                [snp_positionsL, seq_positions, snp_alt_bases, region_ref_seq] = \
+                [snp_positions_l, seq_positions,
+                 snp_alt_bases, region_ref_seq] = \
                     snps_or_indels_in_region(
-                        bam, primerstringL,
+                        bam, primerstring_l,
                         ref_genome,
                         basequal_cutoff=config['basequal_cutoff'],
                         vaf_cutoff=config['vaf_cutoff'],
                         indelaf_cutoff=config['indelaf_cutoff'],
                         var_count_cutoff=config['var_count_cutoff'],
                         indel_count_cutoff=config['indel_count_cutoff'])
-                [snp_positionsR, seq_positions, snp_alt_bases, region_ref_seq] = \
+                [snp_positions_r, seq_positions,
+                 snp_alt_bases, region_ref_seq] = \
                     snps_or_indels_in_region(
-                        bam, primerstringR,
+                        bam, primerstring_r,
                         ref_genome,
                         basequal_cutoff=config['basequal_cutoff'],
                         vaf_cutoff=config['vaf_cutoff'],
                         indelaf_cutoff=config['indelaf_cutoff'],
                         var_count_cutoff=config['var_count_cutoff'],
                         indel_count_cutoff=config['indel_count_cutoff'])
-                if (len(snp_positionsL) > 0) or (len(snp_positionsR) > 0):
+                if (len(snp_positions_l) > 0) or (len(snp_positions_r) > 0):
                     print(f"Found SNP in primer pair: {p}")
-                    print(f"Left primer: {primerstringL}")
-                    print(f"Right primer: {primerstringR}")
+                    print(f"Left primer: {primerstring_l}")
+                    print(f"Right primer: {primerstring_r}")
                     ps_no_snps.remove(p)
 
             # Still has valid primer options
