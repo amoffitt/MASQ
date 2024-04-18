@@ -11,6 +11,9 @@ git clone https://github.com/amoffitt/MASQ /path/to/workdir
 conda env create -f environment.yaml
 conda activate MASQ
 
+# Install editable development version of the MASQ package
+pip install -e .
+
 # Set-up reference genome files for examples
 bash ./prepare_example_references.sh
 
@@ -43,7 +46,7 @@ The MASQ primer design pipeline is run with the following command:
 
 ```bash
 cd primer_design
-python select_enzymes_for_snps.py config.primerdesign.example.yaml 2>&1 | tee log.primerdesign.txt
+masq_select_enzymes_for_snps config.primerdesign.example.yaml 2>&1 | tee log.primerdesign.txt
 ```
 
 Example configuration file and example input SNV lists are included in the primer\_design folder. Enzyme cut site files are included for hg19. Edit the configuration file to point to different SNV files or change the primer design parameters. 
