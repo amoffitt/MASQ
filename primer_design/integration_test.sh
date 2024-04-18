@@ -3,7 +3,7 @@
 rm -rf design_results
 mkdir -p design_results
 
-python select_enzymes_for_snps.py \
+masq_select_enzymes_for_snps \
     config.primerdesign.example.yaml 2>&1 > primerdesign.log
 
 diff snp_primer_design_results.primerdesign_example_updated.txt \

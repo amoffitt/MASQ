@@ -18,6 +18,7 @@ setuptools.setup(
     [console_scripts]
     masq_primer_table_to_sd_table=masq.primer_table_to_sd_table:main
 
+    masq_select_enzymes_for_snps=masq.primer_design.select_enzymes_for_snps:main
     """,
     classifiers=[
         "Development Status :: 4 - Beta",
