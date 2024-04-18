@@ -45,27 +45,18 @@ This command should create a subdirectory `references/hg19` that contains
 └── hg19.seq_dic.cpickle
 ```
 
-### Execute MASQ analysis
-
-# Edit configuration as needed for MASQ analysis
-vi config.yaml
-
-# Execute MASQ analysis workflow (in dry-run mode)
-snakemake -n
-
-# To run the 'standard PCR' example, rename config.standardPCR.yaml to config.yaml
-cp config.yaml config.masq.yaml 
-cp config.standardPCR.yaml config.yaml
-
-# Execute MASQ analysis workflow (specify number of cores)
-snakemake --cores 1
-
-
 ### MASQ Analysis
-The MASQ analysis pipeline is contained in a Snakemake workflow (https://snakemake.readthedocs.io/en/stable/). The workflow is defined by rules in the Snakefile. Individual scripts called from the Snakefile are located in the scripts folder. 
+
+The MASQ analysis pipeline is contained in a Snakemake workflow 
+(https://snakemake.readthedocs.io/en/stable/). The workflow is defined by 
+rules in the Snakefile. Individual scripts called from the Snakefile are 
+located in the scripts folder. 
 
 The source code includes two examples.
-Example input files are included for testing of the workflow installation. Example files include small snippets of FASTQ and BAM files, and a corresponding example locus table. The configuration files are included to run the example analysis. 
+Example input files are included for testing of the workflow installation. 
+Example files include small snippets of FASTQ and BAM files, and a 
+corresponding example locus table. The configuration files are included 
+to run the example analysis. 
 
 
 #### Run `MASQ` example
