@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pip install -e .
+pip install -e . > pipeline.log 2>&1
 
 ./prepare_example_references.sh
 
@@ -13,11 +13,12 @@ rm -rf combined
 rm -rf .snakemake
 rm -rf config.yaml
 
-tar zxf masq_example_outputs.tar.gz
+mkdir -p example_outputs
+tar zxf masq_example_outputs_noqc.tar.gz -C example_outputs
 
 ln -s config.masq.yaml config.yaml
 
-snakemake -j 5
+snakemake -j 5 > pipeline.log 2>&1
 
 diff -r -x logs -x fastqc \
     example_outputs/test_example1 \
