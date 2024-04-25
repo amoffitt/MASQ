@@ -94,7 +94,3 @@ def main(argv: Optional[list[str]] = None) -> None:
 
     result_df = pd.DataFrame.from_records(result)
     result_df.to_csv(args.output_table, sep="\t", index=False)
-
-
-if __name__ == "__main__":
-    main()
