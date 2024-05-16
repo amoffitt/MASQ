@@ -164,6 +164,7 @@ rule check_loci_extend_and_plot:
     params:
         wgs_name = config["WGS_name"],
         wgs_ref = config["WGS_ref"],
+        wgs_ref_fa = config["WGS_ref_fa"],
     log:
         "{sample}/logs/check_loci_plot_and_extend.log"
     script:

@@ -25,6 +25,8 @@ import pysam
 
 from masq_helper_functions import convert_cigar_string
 from masq_helper_functions import setup_logger
+from masq.utils.reference_genome import ReferenceGenome
+from masq.utils.io import process_target_info
 
 ########################################################################
 # Start timer
@@ -76,6 +78,9 @@ seq_pickle = snakemake.params.wgs_ref
 seq_dic = pickle.load(open(seq_pickle, 'rb'))
 log.info('Done loading reference genome pickle')
 
+ref_genome = ReferenceGenome(snakemake.params.wgs_ref_fa)
+ref_genome.open()
+
 ########################################################################
 # Load the input SNV table
 log.info('Loading SNV table')
@@ -90,60 +95,66 @@ log.info('Done loading SNV table')
 # Process input file to extend it with strand info and get coordinates of seq
 log.info('Parsing specific SNV info fields')
 
-target_info = []
-target_locs_array = [list(map(int, x.split(";") ) ) if len(x)>0 else [] for x in snv_info['target_locs']]
+# target_info = []
+# target_locs_array = [list(map(int, x.split(";") ) ) if len(x)>0 else [] for x in snv_info['target_locs']]
 
-for i,loc in enumerate(snv_info['loc']):
-    chrom=snv_info['chr'][i]
-    pos = int(snv_info['posi'][i])
-    target_locs = target_locs_array[i]
-    aml_loc = target_locs[0]
-    log.debug('Position: %d' % pos)
-    log.debug('AML Loc: %d' % aml_loc)
-    int_seq = snv_info['trimmed-target-seq'][i]
-    length = len(int_seq)
+# for i,loc in enumerate(snv_info['loc']):
+#     chrom=snv_info['chr'][i]
+#     pos = int(snv_info['posi'][i])
+#     target_locs = target_locs_array[i]
+#     aml_loc = target_locs[0]
+#     log.debug('Position: %d' % pos)
+#     log.debug('AML Loc: %d' % aml_loc)
+#     int_seq = snv_info['trimmed-target-seq'][i]
+#     length = len(int_seq)
 
-    if chrom=="0":
-        strand="+"
-        start=1
-        end=100
-        targets=target_locs
-    elif ('strand' in snv_info.keys()) and ('fragment-start' in snv_info.keys()) and ('fragment-end' in snv_info.keys()) and ('add-targets' in snv_info.keys()):
-        strand=snv_info['strand'][i]
-        start=snv_info['fragment-start'][i]
-        end=snv_info['fragment-end'][i]
-        end=snv_info['add-targets'][i]
-    else:
-        log.info('Inferring strand, start, and end from match to reference genome')
-        # identifying start and end genomic positions of the targeted region
-        # and getting target sequence from ref genome
-        top_start = pos - 1 - aml_loc
-        top_end = top_start + length
-        top_match = seq_dic[chrom][top_start:top_end]
-        # if the target sequence was on the bottom strand...
-        bottom_start = pos - (length - aml_loc)
-        bottom_end = bottom_start + length
-        bottom_match = reverse_complement(seq_dic[chrom][bottom_start:bottom_end])
+#     if chrom=="0":
+#         strand="+"
+#         start=1
+#         end=100
+#         targets=target_locs
+#     elif ('strand' in snv_info.keys()) and ('fragment-start' in snv_info.keys()) and ('fragment-end' in snv_info.keys()) and ('add-targets' in snv_info.keys()):
+#         strand=snv_info['strand'][i]
+#         start=snv_info['fragment-start'][i]
+#         end=snv_info['fragment-end'][i]
+#         end=snv_info['add-targets'][i]
+#     else:
+#         log.info('Inferring strand, start, and end from match to reference genome')
+#         # identifying start and end genomic positions of the targeted region
+#         # and getting target sequence from ref genome
+#         top_start = pos - 1 - aml_loc
+#         top_end = top_start + length
+#         # top_match = seq_dic[chrom][top_start:top_end]
+#         top_match = ref_genome.get_sequence(chrom, top_start, top_end)
+#         # if the target sequence was on the bottom strand...
+#         bottom_start = pos - (length - aml_loc)
+#         bottom_end = bottom_start + length
+#         # bottom_match = reverse_complement(seq_dic[chrom][bottom_start:bottom_end])
+#         bottom_match = reverse_complement(
+#             ref_genome.get_sequence(chrom, bottom_start, bottom_end)
+#         )
 
-        log.debug('Target seq : %s' % int_seq)
-        log.debug('Top match  : %s' % top_match)
-        log.debug('Btm match  : %s' % bottom_match)
+#         log.debug('Target seq : %s' % int_seq)
+#         log.debug('Top match  : %s' % top_match)
+#         log.debug('Btm match  : %s' % bottom_match)
 
-        # check which strand the sequence came from and set coordinates
-        if top_match == int_seq:
-            log.debug('Locus %s: positive strand' % (loc))
-            strand = "+"
-            start = top_start
-            end = top_end
-            targets = target_locs
-        else:
-            log.debug('Locus %s: negative strand' % (loc))
-            strand = "-"
-            start = bottom_start
-            end = bottom_end
-            targets = [length - x - 1 for x in target_locs]
+#         # check which strand the sequence came from and set coordinates
+#         if top_match == int_seq:
+#             log.debug('Locus %s: positive strand' % (loc))
+#             strand = "+"
+#             start = top_start
+#             end = top_end
+#             targets = target_locs
+#         else:
+#             log.debug('Locus %s: negative strand' % (loc))
+#             strand = "-"
+#             start = bottom_start
+#             end = bottom_end
+#             targets = [length - x - 1 for x in target_locs]
 
-    target_info.append([chrom, strand, start, end, targets])
+#     target_info.append([chrom, strand, start, end, targets])
+
+target_info = process_target_info(snv_info, ref_genome)
 
 ########################################################################
 # Now go through WGS data and add non-ref bases to the input file...
@@ -159,6 +170,7 @@ region_buffer = 30
 
 all_targets = []
 loc_ind = 0  # counter for which loci we're on
+
 #
 # load each region from the target info read in and processed
 for chrom, strand, true_start, true_end, true_targets in target_info:
