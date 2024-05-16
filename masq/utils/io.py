@@ -117,3 +117,28 @@ def process_target_info(
 
         target_info.append([chrom, strand, start, end, targets])
     return target_info
+
+
+def extend_snv_info_with_target_info(
+    snv_info: dict[str, Any],
+    target_info: list[list],
+    all_targets: list[list[int]],
+) -> dict[str, Any]:
+    snv_info['add-targets']=[]
+    snv_info['strand']=[]
+    snv_info['fragment-start']=[]
+    snv_info['fragment-end']=[]
+    print("Start loop")
+
+    for i, (new_targets, more_info) in enumerate(zip(all_targets, target_info)):
+        print(i)
+        prev_targets = list(map(int, snv_info['target_locs'][i].split(";")))
+        add_targets = [x for x in new_targets if x not in prev_targets]
+        snv_info['add-targets'].append(";".join(list(map(str, add_targets))))
+        snv_info['strand'].append(more_info[1])
+        snv_info['fragment-start'].append(more_info[2])
+        snv_info['fragment-end'].append(more_info[3])
+    print("End loop")
+    print(snv_info)
+
+    return snv_info

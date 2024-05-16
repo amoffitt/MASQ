@@ -18,7 +18,7 @@ import pysam
 from masq_helper_functions import convert_cigar_string
 from masq_helper_functions import setup_logger
 from masq.utils.reference_genome import ReferenceGenome
-from masq.utils.io import process_target_info
+from masq.utils.io import process_target_info, extend_snv_info_with_target_info
 from masq.utils.io import load_snv_table, write_snv_table, tabprint
 
 ########################################################################
@@ -93,7 +93,8 @@ target_info = process_target_info(snv_info, ref_genome)
 log.info('Finding additional variant positions from WGS BAM')
 BASES = ["A", "C", "G", "T"]
 #sample_names = [WGS_NAME] # EDIT TO ALLOW MULTIPLE BAMS...
-BASE2INT = dict([x[::-1] for x in enumerate(BASES)])
+BASE2INT = dict(x[::-1] for x in enumerate(BASES))
+
 MIN_QUAL = 20
 MIN_MAP = 40
 buff = 30
@@ -298,35 +299,38 @@ for chrom, strand, true_start, true_end, true_targets in target_info:
 
         # new_targets>=0 (in original target region)
         new_targets = new_targets[(new_targets >= 0) * (new_targets < rlen)]
-        all_targets.append(new_targets)
+        all_targets.append(list(new_targets))
 
     ########################################################################
 
+
 # Add new het/homo non-ref sites to original input file
 log.info('Writing updated SNV info table')
-outfile = open(updated_SNV_table, 'w')
+snv_info = extend_snv_info_with_target_info(
+    snv_info,
+    target_info,
+    all_targets,
+)
 
-snv_info['add-targets']=[]
-snv_info['strand']=[]
-snv_info['fragment-start']=[]
-snv_info['fragment-end']=[]
-print("Start loop")
-for i, (new_targets, more_info) in enumerate(zip(all_targets, target_info)):
-    print(i)
-    prev_targets = list(map(int, snv_info['target_locs'][i].split(";")))
-    add_targets = [x for x in new_targets if x not in prev_targets]
-    snv_info['add-targets'].append(";".join(list(map(str, add_targets))))
-    snv_info['strand'].append(more_info[1])
-    snv_info['fragment-start'].append(more_info[2])
-    snv_info['fragment-end'].append(more_info[3])
-print("End loop")
-print(snv_info)
+with open(updated_SNV_table, 'w') as outfile:
+    # snv_info['add-targets']=[]
+    # snv_info['strand']=[]
+    # snv_info['fragment-start']=[]
+    # snv_info['fragment-end']=[]
+    # print("Start loop")
+    # for i, (new_targets, more_info) in enumerate(zip(all_targets, target_info)):
+    #     print(i)
+    #     prev_targets = list(map(int, snv_info['target_locs'][i].split(";")))
+    #     add_targets = [x for x in new_targets if x not in prev_targets]
+    #     snv_info['add-targets'].append(";".join(list(map(str, add_targets))))
+    #     snv_info['strand'].append(more_info[1])
+    #     snv_info['fragment-start'].append(more_info[2])
+    #     snv_info['fragment-end'].append(more_info[3])
+    # print("End loop")
+    # print(snv_info)
 
-write_snv_table(snv_info, outfile)
+    write_snv_table(snv_info, outfile)
 
-########################################################################
-# Close files
-outfile.close()
 
 ########################################################################
 # End timer
