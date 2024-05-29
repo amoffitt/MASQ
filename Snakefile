@@ -163,12 +163,22 @@ rule check_loci_extend_and_plot:
         plots = expand("{{sample}}/plots/{{sample}}.WGS_varfreqs.{region}.png", region=config["regions"])
     params:
         wgs_name = config["WGS_name"],
-        # wgs_ref = config["WGS_ref"],
         wgs_ref_fa = config["WGS_ref_fa"],
     log:
         "{sample}/logs/check_loci_plot_and_extend.log"
-    script:
-        "scripts/check_loci_plot_and_extend.py"
+    run:
+        bam_files = " ".join(input.bam if isinstance(input.bam,list) else [input.bam])
+        bam_names = " ".join(params.wgs_name if isinstance(params.wgs_name,list) else [params.wgs_name])
+        shell(
+        """
+        masq_check_loci_plot_and_extend --snv-table {input.SNV_table} \
+            --wgs-bam-files {bam_files:q} \
+            --wgs-bam-names {bam_names:q} \
+            --ref-genome {params.wgs_ref_fa} \
+            --output-snv-table {output.new_SNV_table} \
+            {output.plots}
+        """
+        )
 
 ################################################################################
 
