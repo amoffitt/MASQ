@@ -258,8 +258,15 @@ rule combine_within_tag_errors:
         within_tag_table2="{sample}/reports/{sample}.within_tag_errors.fractions.txt"
     log:
         "{sample}/logs/combine_within_tag_errors.log"
-    script:
-        "scripts/combine_withintagerr.py"
+    run:
+        within_tag_errors = " ".join(input.within_tag_error_pickles)
+        shell(
+            """
+            masq_combine_within_tag_err  --within-tag-errors {within_tag_errors:q} \
+                --output-table1 {output.within_tag_table1} \
+                --output-table2 {output.within_tag_table2}
+            """
+        )
 
 ################################################################################
 
