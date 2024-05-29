@@ -24,7 +24,7 @@ def check_sequence_for_cut_site(sequence: str, pattern: str) -> bool:
     return False
 
 
-BASES = ["N", "A", "C", "G", "T"]
+BASES = ["A", "C", "G", "T", "N"]
 BASE2INT = {base: index for index, base in enumerate(BASES)}
 
 
