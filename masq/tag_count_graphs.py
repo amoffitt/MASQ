@@ -5,8 +5,6 @@ import argparse
 import logging
 from collections import Counter
 import pickle
-import time
-
 from typing import Optional
 import sys
 
@@ -21,12 +19,6 @@ from masq.plots.tag_plots import (
 
 logger = logging.getLogger("masq_tag_count_graphs")
 
-
-
-########################################################################
-
-# Start timer
-t0_all = time.time()
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -63,20 +55,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-
-# # Filenames and parameters
-# vt_counter_filename = snakemake.input.vt_counter
-
-# # WHICH REGION ARE WE PROCESSING
-# REGION = snakemake.params.region
-# # Sample name
-# sample = snakemake.params.sample
-
-# # Output report file
-# outfilename = snakemake.output.tagcounts
-# outfile = open(outfilename,"w")
-########################################################################
-
 def main(argv: Optional[list[str]] = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
@@ -86,23 +64,20 @@ def main(argv: Optional[list[str]] = None) -> None:
     logger.info("loading sequence data...")
     with open(args.vt_counter, "rb") as infile:
         vt_counter = pickle.load(infile)
-
     logger.info("sequence data loaded")
 
     ########################################################################
-
     # tabulate distribution of reads per tag
     reads_per_tag: dict[str, int] = Counter()
     numreads_total = 0
     numtags_total = len(vt_counter)
-    for tag, tag_count in vt_counter.items():
+    for _tag, tag_count in vt_counter.items():
         reads_per_tag[tag_count]+=1
         numreads_total += tag_count
     numreads=np.array(list(reads_per_tag.keys()))
     numtags=np.array(list(reads_per_tag.values()))
 
     ########################################################################
-
     # Plot reads per tag
     plot_number_of_reads_per_tag(
         numreads,
@@ -118,22 +93,12 @@ def main(argv: Optional[list[str]] = None) -> None:
         numreads_total,
         numtags_total,
         sample=args.sample,
-        filename=args.plot2,
-        logscale=True,
-        maxcount=100)
+        filename=args.plot2)
 
     ########################################################################
-
     # Write bar graph counts out to file
     with open(args.output, "w") as outfile:
         header = ["Region","Reads Per Tag","Number of Tags"]
         outfile.write(tabprint(header)+"\n")
-        for i in range(len(numreads)):
-            outfile.write(
-                tabprint([int(args.region),numreads[i],numtags[i]])+"\n")
-
-
-    # header = ["Region","Reads Per Tag","Number of Tags"]
-    # outfile.write(tabprint(header)+"\n")
-    # for i in range(len(numreads)):
-    #     outfile.write(tabprint([int(REGION),numreads[i],numtags[i]])+"\n")
+        for reads, tags in zip(numreads, numtags):
+            outfile.write(tabprint([int(args.region),reads,tags])+"\n")
