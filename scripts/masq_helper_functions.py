@@ -289,63 +289,6 @@ def cluster_rollup2(vt_counter,vt_seq_counter,flip_counter,show_progress=False):
         return vt_counter, vt_seq_counter, [] , [], {}, flip_counter
 
 
-
-
-
-########################################################################
-def plot_number_of_reads_per_tag(
-                                numreads,
-                                numtags,
-                                totalreads,
-                                totaltags,
-                                sample="",
-                                filename="number_reads_per_tag.png",
-                                logscale=True):
-
-    fig = plt.figure(figsize=(50,10))
-    fig.suptitle(sample+"\n"+
-                 "Number of Reads Per Tag" + "\n" +
-                 "Total Reads: %d" % totalreads + "\n"
-                 "Total Tags: %d" % totaltags, fontsize=16)
-    width=0.8
-    plt.bar(numreads,numtags,0.8,log=logscale)
-    #plt.xticks(numreads,numreads)
-    plt.xlabel("Reads Per Tag",fontsize=14)
-    plt.ylabel("Number of Tags",fontsize=14)
-    plt.savefig(filename, dpi=200, facecolor='w', edgecolor='w',
-                papertype=None, format=None,
-                transparent=False)
-    plt.close()
-
-
-def plot_at_least_x_reads_per_tag(
-                                numreads,
-                                numtags,
-                                totalreads,
-                                totaltags,
-                                sample="",
-                                filename="atleastX_reads_per_tag.png",
-                                logscale=True,
-                                maxcount=100):
-    fig = plt.figure(figsize=(50,10))
-    fig.suptitle(sample+"\n"+
-                 "Number of Tags with at Least X Reads" + "\n" +
-                 "Total Reads: %d" % totalreads + "\n"
-                 "Total Tags: %d" % totaltags, fontsize=16)
-    x=[]; y=[]
-    for xbin in range(1,100):
-        x.append(xbin)
-        y.append(sum(numtags[numreads>=xbin]))
-    plt.bar(x,y,0.8,color='green')
-    plt.xlabel("Reads Per Tag",fontsize=14)
-    plt.ylabel("Number of Tags with at least X Reads Per Tag",fontsize=14)
-    plt.savefig(filename, dpi=200, facecolor='w', edgecolor='w',
-                papertype=None, format=None,
-                transparent=False)
-    plt.close()
-########################################################################
-
-
 def convert_quality_score(qual_ascii):
     qual_numeric = [ord(x)-33 for x in qual_ascii]
     return qual_numeric
