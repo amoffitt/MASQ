@@ -336,8 +336,19 @@ rule rollup_tags:
         dna_input_ng = config["dna_input_ng"]
     log:
         "{sample}/logs/rollup_tags.region_{region}.log"
-    script:
-        "scripts/collapse_tags.py"
+    shell:
+        """
+        masq_collapse_tags --vt-counter {input.vt_counter} \
+            --vt-seq-counter {input.vt_seq_counter} \
+            --flip-counter {input.flip_counter} \
+            --output-vt-counter {output.vt_counter} \
+            --output-vt-seq-counter {output.vt_seq_counter} \
+            --output-flip-counter {output.flip_counter} \
+            --output {output.tagcounts} \
+            --region {params.region} \
+            --sample {params.sample} \
+            --dna-input-ng {params.dna_input_ng}
+        """
 
 ################################################################################
 

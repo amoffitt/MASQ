@@ -62,7 +62,7 @@ def hamming(
 
     return int(sum(map(ne, str1, str2)))
 
-## simple class for counting pairs
+# ## simple class for counting pairs
 def double_counter():
     return [0, 0]
 
