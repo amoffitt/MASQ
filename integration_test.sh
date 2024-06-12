@@ -14,7 +14,7 @@ rm -rf .snakemake
 rm -rf config.yaml
 
 mkdir -p example_outputs
-tar zxf masq_example_outputs_noqc.tar.gz -C example_outputs
+tar zxf masq_example_outputs_noqc_double_counter.tar.gz -C example_outputs
 
 ln -s config.masq.yaml config.yaml
 
