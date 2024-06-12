@@ -456,8 +456,12 @@ rule extract_variant_bases_from_report:
         variant_report="{sample}/reports/{sample}.base_count_variantbasesonly.txt"
     log:
         "{sample}/logs/extract_variant_info.log"
-    script:
-        "scripts/extract_variant_info.py"
+    shell:
+        """
+        masq_extract_variant_info \
+            --combined-report {input.combined_report} \
+            --variant-report {output.variant_report}
+        """
 
 ################################################################################
 
