@@ -21,6 +21,7 @@ setuptools.setup(
     masq_combine_within_tag_err=masq.combine_within_tag_err:main
     masq_tag_count_graphs=masq.tag_count_graphs:main
     masq_tag_count_graphs_allregions=masq.tag_count_graphs_allregions:main
+    masq_collapse_tags=masq.collapse_tags:main
 
     masq_select_enzymes_for_snps=masq.primer_design.select_enzymes_for_snps:main
     """,
