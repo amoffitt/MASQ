@@ -14,7 +14,7 @@ rm -rf .snakemake
 rm -rf config.yaml
 
 mkdir -p example_outputs
-tar zxf pcr_example_outputs.tar.gz -C example_outputs
+tar zxf pcr_example_outputs_double_counter.tar.gz -C example_outputs
 
 ln -s config.standardPCR.yaml config.yaml
 
