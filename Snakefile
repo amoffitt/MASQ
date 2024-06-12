@@ -305,8 +305,18 @@ rule tag_count_graphs_combined:
         sample = lambda wildcards: wildcards.sample
     log:
         "{sample}/logs/tag_counts_allregions.total.log"
-    script:
-        "scripts/tag_count_graphs_allregions.py"
+    run:
+        vt_counter_filenames = " ".join(input.vt_counters)
+        shell(
+            """
+            masq_tag_count_graphs_allregions \
+                --vt-counters {vt_counter_filenames:q} \
+                --output {output.tagcounts} \
+                --plot1 {output.plot1} \
+                --plot2 {output.plot2} \
+                --sample {params.sample}
+            """
+        )
 
 ################################################################################
 
