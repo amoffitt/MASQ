@@ -474,8 +474,16 @@ rule plot_rollup_results:
         sample = lambda wildcards: wildcards.sample
     log:
         "{sample}/logs/plot_rollup_results.log"
-    script:
-        "scripts/plot_rollup_results.py"
+    shell:
+        """
+        masq_plot_rollup_results \
+            --combined-report {input.combined_report} \
+            --plot1 {output.plot1} \
+            --sample {params.sample}
+        """
+
+    # script:
+    #     "scripts/plot_rollup_results.py"
 
 ################################################################################
 
