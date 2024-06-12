@@ -482,9 +482,6 @@ rule plot_rollup_results:
             --sample {params.sample}
         """
 
-    # script:
-    #     "scripts/plot_rollup_results.py"
-
 ################################################################################
 
 rule final_report:
