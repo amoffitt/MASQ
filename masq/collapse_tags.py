@@ -6,7 +6,6 @@ import argparse
 import logging
 import pickle
 import sys
-import time
 
 from typing import Optional
 
@@ -16,34 +15,6 @@ from masq.tags.cluster_rollup import cluster_rollup2
 
 logger = logging.getLogger("masq_collapse_tags")
 
-########################################################################
-
-# Start timer
-t0_all = time.time()
-
-
-# # Filenames and parameters
-# vt_counter_filename = snakemake.input.vt_counter
-# vt_seq_counter_filename = snakemake.input.vt_seq_counter
-# flip_counter_filename = snakemake.input.flip_counter
-
-# DNA_INPUT_NANOGRAMS = snakemake.params.dna_input_ng
-
-# # WHICH REGION ARE WE PROCESSING
-# REGION = snakemake.params.region
-# # Sample name
-# sample = snakemake.params.sample
-
-# # Output report file
-# outfilename = snakemake.output.tagcounts
-# outfile = open(outfilename,"w")
-
-# # New counters
-# new_vt_counter_filename = snakemake.output.vt_counter
-# new_vt_seq_counter_filename = snakemake.output.vt_seq_counter
-# new_flip_counter_filename = snakemake.output.flip_counter
-
-########################################################################
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -98,6 +69,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Output flip counter pickle filename",
     )
     return parser.parse_args(argv)
+
 
 def main(argv: Optional[list[str]] = None) -> None:
     if argv is None:
