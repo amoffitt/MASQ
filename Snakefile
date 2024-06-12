@@ -359,8 +359,15 @@ rule combine_reports_alignment:
         combined_report="{sample}/reports/{sample}.alignment_counter.combined.txt"
     log:
         "{sample}/logs/combine_reports.alignment.log"
-    script:
-        "scripts/combine_reports.py"
+    run:
+        region_filenames = " ".join(input.region_reports)
+        shell(
+            """
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
+            """
+        )
 
 
 ################################################################################
@@ -372,8 +379,15 @@ rule combine_reports_basecount:
         combined_report="{sample}/reports/{sample}.base_count_allbases.combined.txt"
     log:
         "{sample}/logs/combine_reports.basecount.log"
-    script:
-        "scripts/combine_reports.py"
+    run:
+        region_filenames = " ".join(input.region_reports)
+        shell(
+            """
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
+            """
+        )
 
 ################################################################################
 
@@ -384,8 +398,15 @@ rule combine_reports_per_base:
         combined_report="{sample}/reports/{sample}.base_count_allbases.perbase.combined.txt"
     log:
         "{sample}/logs/combine_reports.perbase.log"
-    script:
-        "scripts/combine_reports.py"
+    run:
+        region_filenames = " ".join(input.region_reports)
+        shell(
+            """
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
+            """
+        )
 
 ################################################################################
 
@@ -396,8 +417,15 @@ rule combine_reports_rollup:
         combined_report="{sample}/reports/{sample}.rollup_results.combined.txt"
     log:
         "{sample}/logs/combine_reports.rollup.log"
-    script:
-        "scripts/combine_reports.py"
+    run:
+        region_filenames = " ".join(input.region_reports)
+        shell(
+            """
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
+            """
+        )
 
 ################################################################################
 
@@ -409,8 +437,15 @@ rule combine_reports_readspertag:
         combined_report="{sample}/reports/{sample}.number_reads_per_tag.combined.txt"
     log:
         "{sample}/logs/combine_reports.readspertag.log"
-    script:
-        "scripts/combine_reports.py"
+    run:
+        region_filenames = " ".join(input.region_reports)
+        shell(
+            """
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
+            """
+        )
 
 ################################################################################
 
