@@ -37,15 +37,11 @@ def main(argv: Optional[list[str]] = None) -> None:
     output_file = args.combined_report
 
     with open(output_file,"w") as outfile:
-
-        counter=0
-        for input_filename in input_file_list:
-            counter +=1
+        for input_counter, input_filename in enumerate(input_file_list):
             with open(input_filename, "r") as infile:
-                linecounter=1
-                for line in infile:
-                    if linecounter==1:
-                        if counter==1:
+                for linecounter, line in enumerate(infile):
+                    if linecounter == 0:
+                        if input_counter == 0:
                             # first file header
                             outfile.write(line)
                     else:
