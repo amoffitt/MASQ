@@ -19,6 +19,7 @@ setuptools.setup(
     masq_primer_table_to_sd_table=masq.primer_table_to_sd_table:main
     masq_check_loci_plot_and_extend=masq.check_loci_plot_and_extend:main
     masq_combine_within_tag_err=masq.combine_within_tag_err:main
+    masq_tag_count_graphs=masq.tag_count_graphs:main
 
     masq_select_enzymes_for_snps=masq.primer_design.select_enzymes_for_snps:main
     """,

@@ -282,8 +282,15 @@ rule tag_count_graphs_per_region:
         sample = lambda wildcards: wildcards.sample
     log:
         "{sample}/logs/tag_counts_per_region.{region}.log"
-    script:
-        "scripts/tag_count_graphs.py"
+    shell:
+        """
+        masq_tag_count_graphs --vt-counter {input.vt_counter} \
+            --plot1 {output.plot1} \
+            --plot2 {output.plot2} \
+            --output {output.tagcounts} \
+            --region {params.region} \
+            --sample {params.sample}
+        """
 
 ################################################################################
 
