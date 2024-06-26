@@ -245,7 +245,7 @@ rule all_base_report:
     input:
         vt_counter="{sample}/pickles/{sample}.rolledup.vt_counter.{region}.pickle" if config["dorollup"] else "{sample}/pickles/{sample}.vt_counter.{region}.pickle",
         vt_seq_counter="{sample}/pickles/{sample}.rolledup.vt_seq_counter.{region}.pickle" if config["dorollup"] else "{sample}/pickles/{sample}.vt_seq_counter.{region}.pickle",
-        flip_counters="{sample}/pickles/{sample}.flip_counter.{region}.pickle"
+        flip_counter="{sample}/pickles/{sample}.flip_counter.{region}.pickle"
     output:
         base_count_report="{sample}/reports/{sample}.base_count_allbases.region_{region}.txt",
         base_count_report_per_base="{sample}/reports/{sample}.base_count_allbases.perbase.region_{region}.txt",
@@ -256,21 +256,37 @@ rule all_base_report:
     params:
         SNV_table=lambda wildcards: wildcards.sample+"/extended_var_table.txt",
         region = lambda wildcards: wildcards.region,
-        target_hamming = config["target_hamming"],
-        base_error_rate = config["base_error_rate"],
-        coverage_list = config["coverage_list"],
-        mask_lowqual_bases = config["mask_lowqual_bases"],
-        qual_cutoff = config["qual_cutoff"],
-        max_N_ratio = config["max_N_ratio"],
-        ref_genome = config["ref_genome"],
-        tag= config["tag"],
-        UP2= config["UP2"],
-        trim_len= config["trim_len"],
-        filter_ns = config['filter_ns']
+        # target_hamming = config["target_hamming"],
+        # base_error_rate = config["base_error_rate"],
+        # coverage_list = config["coverage_list"],
+        # mask_lowqual_bases = config["mask_lowqual_bases"],
+        # qual_cutoff = config["qual_cutoff"],
+        # max_N_ratio = config["max_N_ratio"],
+        # ref_genome = config["ref_genome"],
+        # tag= config["tag"],
+        # UP2= config["UP2"],
+        # trim_len= config["trim_len"],
+        # filter_ns = config['filter_ns']
     log:
         "{sample}/logs/all_base_report.{region}.log"
-    script:
-        "scripts/all_base_report.py" 
+    shell:
+        """
+        masq_all_base_report  \
+        --vt-counter {input.vt_counter} \
+        --vt-seq-counter {input.vt_seq_counter} \
+        --flip-counter {input.flip_counter} \
+        --base-count-report {output.base_count_report} \
+        --base-count-report-per-base {output.base_count_report_per_base} \
+        --alignment-report {output.alignment_report} \
+        --within-tag-errors {output.withintagerrors} \
+        --within-tag-errors-table {output.withintagerrors_table} \
+        --unaligned-reads {output.unaligned_reads} \
+        --snv-table {params.SNV_table} \
+        --region {params.region}
+        """
+
+    # script:
+    #     "scripts/all_base_report.py" 
 
 ################################################################################
 rule combine_within_tag_errors:
