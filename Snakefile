@@ -121,21 +121,21 @@ rule convert_SNV_table:
         "masq_primer_table_to_sd_table {input.oldtable} {output.newtable} {params.ref_genome}"
 
 
-###############################################################################
-rule barcode_split:
-    input:
-        presplit_fastq1=config["presplit_fastqs"][0],
-        presplit_fastq2=config["presplit_fastqs"][1]
-    output:
-        output_fastqs=expand("bc_split_fastqs/{sample}/{read}.fastq.gz",read=["r1","r2"],sample=config["samples"])
-    params:
-        output_dir="bc_split_fastqs/",
-        threads=16,
-        sample_bc_list=sample_bc_string
-    shell:
-        """
-        scripts/trim_bcs.sh {params.threads} {params.output_dir} {input.presplit_fastq1} {input.presplit_fastq2} {params.sample_bc_list}
-        """
+# ###############################################################################
+# rule barcode_split:
+#     input:
+#         presplit_fastq1=config["presplit_fastqs"][0],
+#         presplit_fastq2=config["presplit_fastqs"][1]
+#     output:
+#         output_fastqs=expand("bc_split_fastqs/{sample}/{read}.fastq.gz",read=["r1","r2"],sample=config["samples"])
+#     params:
+#         output_dir="bc_split_fastqs/",
+#         threads=16,
+#         sample_bc_list=sample_bc_string
+#     shell:
+#         """
+#         scripts/trim_bcs.sh {params.threads} {params.output_dir} {input.presplit_fastq1} {input.presplit_fastq2} {params.sample_bc_list}
+#         """
 
 ################################################################################
 rule fastqc:
