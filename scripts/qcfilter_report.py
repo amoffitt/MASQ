@@ -11,23 +11,23 @@ import fileinput
 import operator
 import pickle
 import time
+import logging
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
-from masq_helper_functions import setup_logger
 ########################################################################
-# Start timer
-t0 = time.time()
-# Setup log file
-log = setup_logger(snakemake.log,'filter_loci')
-log.info('Starting process')
+
+logger = logging.getLogger('qcfilter_report')
+
+logger.info('Starting process')
 
 ########################################################################
 
 # Input is combined base report file 
 # Output is same file, with QC filtered loci removed
-log.info('Filtering report')
+logger.info('Filtering report')
 
 qc_fail_loci=[]
 with open(snakemake.input.qcfail,'r') as f:
@@ -44,12 +44,4 @@ with open(snakemake.input.base_report,'r') as f:
                 x=line.split()
                 if (x[1] not in qc_fail_loci):
                     fout.write(line)
-            c=c+1
-                     
-########################################################################
-# End timer
-t1 = time.time()
-td = (t1 - t0) / 60
-log.info("Done in %0.2f minutes" % td)
-
-########################################################################
+            c = c+1
