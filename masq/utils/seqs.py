@@ -66,3 +66,43 @@ def check_tag_structure(vt: str, structure: str) -> bool:
     # vt1="ACTTGGTACCGTTTTAAAG" # perfect
     # vt2="ACTGGGTACCGTTTTCAAG" # not
     # structure="NNNWNNNWNNNWNNNWNNN"
+
+
+## apply hamming distance to pair of reads
+def test_pair(a1: str, a2: str, b1: str, b2: str, use_edit_distance: bool = False) -> int:
+    h1 = hamming(a1, b1, use_edit_distance=use_edit_distance)
+    h2 = hamming(a2, b2, use_edit_distance=use_edit_distance)
+    return h1 + h2
+
+
+def hamming_withNs(
+    str1: str,
+    str2: str,
+    maxNratio: float = 0.2,
+    use_edit_distance: bool = False
+) -> int:
+    ne = operator.ne
+    c = operator.countOf
+    L = min(len(str1),len(str2))
+    ncount = max(c(str1[:L],'N'),c(str2[:L],'N'))
+    if use_edit_distance:
+        h = editdistance.eval(str1[:L],str2[:L])
+    else:
+        h = sum(map(ne, str1, str2))
+    if float(ncount)/L > maxNratio:
+        return L
+
+    return (h - ncount)
+
+
+def test_pair_withNs(
+    a1: str,
+    a2: str,
+    b1: str,
+    b2: str,
+    maxNratio: float = 0.2,
+    use_edit_distance: bool = False
+) -> int:
+    h1 = hamming_withNs(a1, b1, use_edit_distance=use_edit_distance)
+    h2 = hamming_withNs(a2, b2, use_edit_distance=use_edit_distance)
+    return h1 + h2
