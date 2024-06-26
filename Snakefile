@@ -495,8 +495,16 @@ rule final_report:
         combined_report="{sample}/reports/{sample}.final_report.txt"
     log:
         "{sample}/logs/final_report.log"
-    script:
-        "scripts/final_report.py"
+    shell:
+        """
+        masq_final_report \
+            --input-snv-table {input.input_snv_table} \
+            --report-primers {input.report_primers} \
+            --report-rollup {input.report_rollup} \
+            --report-alignment {input.report_alignment} \
+            --report-variants {input.report_variants} \
+            --combined-report {output.combined_report}
+        """
 
 ################################################################################
 rule bad_loci:
