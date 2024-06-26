@@ -298,7 +298,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         config['sample'] + \
         "." + date + ".txt"
 
-    blat_hits = run_full_blat_query(
+    snpdict, _ = run_full_blat_query(
         blatqueryfile,
         blatresultfile,
         snpdict,

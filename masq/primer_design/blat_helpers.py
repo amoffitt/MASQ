@@ -240,7 +240,7 @@ def run_full_blat_query(
     snpdict: dict[str, dict[str, Any]],
     ref_genome: ReferenceGenome,
     config: dict[str, Any]
-) -> dict[str, Any]:
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
 
     with open(blatqueryfile, 'w') as blatf:
         passed_snps: list[str] = [
@@ -289,4 +289,4 @@ def run_full_blat_query(
                     snpdict[snpid]['status'] = 'drop'
                     snpdict[snpid]['drop_reason'] = 'full_len_blat'
     print("Done with full length blat")
-    return blat_hits
+    return snpdict, blat_hits
