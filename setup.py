@@ -26,6 +26,7 @@ setuptools.setup(
     masq_extract_variant_info=masq.extract_variant_info:main
     masq_plot_rollup_results=masq.plot_rollup_results:main
     masq_final_report=masq.final_report:main
+    masq_sort_data_by_tag_and_locus=masq.sort_data_by_tag_and_locus:main
 
     masq_select_enzymes_for_snps=masq.primer_design.select_enzymes_for_snps:main
     """,

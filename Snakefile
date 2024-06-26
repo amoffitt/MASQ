@@ -197,24 +197,47 @@ rule sort_data_by_tag_and_locus:
         ss1ss2_unmatched_report="{sample}/reports/{sample}.unmatched_SS1_SS2_seqs.txt",
         goodtag_report="{sample}/reports/{sample}.good_tags.txt",
         badtag_report="{sample}/reports/{sample}.bad_tags.txt"
-    params:
-        min_len= config["min_len"],
-        trim_len= config["trim_len"],
-        SS_sum_hamming= config["SS_sum_hamming"],
-        UP2_hamming= config["UP2_hamming"],
-        tag= config["tag"],
-        UP2= config["UP2"],
-        protocol= config["protocol"],
-        quick_run= config["quick_run"],
-        quick_run_reads = config["quick_run_reads"],
-        mask_lowqual_bases = config["mask_lowqual_bases"],
-        qual_cutoff = config["qual_cutoff"],
-        max_N_ratio = config["max_N_ratio"],
-        use_edit_distance = config["use_edit_distance"]
+    # params:
+    #     min_len= config["min_len"],
+    #     trim_len= config["trim_len"],
+    #     SS_sum_hamming= config["SS_sum_hamming"],
+    #     UP2_hamming= config["UP2_hamming"],
+    #     tag= config["tag"],
+    #     UP2= config["UP2"],
+    #     protocol= config["protocol"],
+    #     quick_run= config["quick_run"],
+    #     quick_run_reads = config["quick_run_reads"],
+    #     mask_lowqual_bases = config["mask_lowqual_bases"],
+    #     qual_cutoff = config["qual_cutoff"],
+    #     max_N_ratio = config["max_N_ratio"],
+    #     use_edit_distance = config["use_edit_distance"]
     log:
         "{sample}/logs/sort_data_by_tag_and_locus.log"
-    script:
-        "scripts/sort_data_by_tag_and_locus.py"
+    run:
+        vt_counters = " ".join(output.vt_counters)
+        vt_seq_counters = " ".join(output.vt_seq_counters)
+        flip_counters = " ".join(output.flip_counters)
+
+        shell(
+            """
+            masq_sort_data_by_tag_and_locus  --fastq1 {input.fastq1} \
+            --fastq2 {input.fastq2} \
+            --snv-table {input.SNV_table} \
+            --vt-counters {vt_counters:q} \
+            --vt-seq-counters {vt_seq_counters:q} \
+            --flip-counters {flip_counters:q} \
+            --ss-hamming-plot {output.ss_hamming_plot} \
+            --counter-report {output.counter_report} \
+            --up2-unmatched-report {output.up2_unmatched_report} \
+            --ss1ss2-unmatched-report {output.ss1ss2_unmatched_report} \
+            --goodtag-report {output.goodtag_report} \
+            --badtag-report {output.badtag_report}
+
+            """
+        )
+
+    # script:
+    #     "scripts/sort_data_by_tag_and_locus.py"
 
 ################################################################################
 
