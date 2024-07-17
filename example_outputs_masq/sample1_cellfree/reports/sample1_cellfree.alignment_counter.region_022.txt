@@ -1,0 +1,2 @@
+Region Index	Ref Sequence Index	Number of Tags	Number of Aligned Tags	Fraction Aligned Tags	Number of Processed Reads	Number of Aligned Reads	Fraction Aligned Reads
+22	0	1390	1386	0.9971223021582734	3303	3285	0.9945504087193461

@@ -1,0 +1,5 @@
+Region	Reads Per Tag	Number of Tags
+18	4	1
+18	3	5
+18	2	152
+18	1	2083

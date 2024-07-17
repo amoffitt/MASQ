@@ -1,0 +1,79 @@
+# Config file example for MASQ pipeline
+
+# Sample information
+groupname: "test_examples_MASQ"
+# One sample, or list of samples
+samples: ["sample1_cellfree","sample2_cells"]
+
+# For calculating yield
+dna_input_ng: 1000
+# dna_input can also be a list for multiple samples
+
+# Locus info table 
+# See example for precise format
+SNV_table: "example_inputs/locus_table.MASQ.txt"
+
+# (Optional) Bad loci 
+# Loci that should be dropped from analysis for reasons not detected by automatic QC.
+# bad_loci: [5,8]
+
+# FASTQs
+# Expects r1.fastq.gz and r2.fastq.gz in folder
+fastq_dirs: 
+    sample1_cellfree: "example_inputs/fastqs/sample1_cellfree"
+    sample2_cells: "example_inputs/fastqs/sample2_cells"
+
+# Whole genome or other BAM file to use to identify non-target variants
+# WGS_bam and WGS_name can be lists for multiple BAMs
+# BAM must be indexed
+WGS_bam: ["example_inputs/example_MASQ.normal.wgs.bam","example_inputs/example_MASQ.tumor.wgs.bam"]
+WGS_name: ["normal_wgs_bam","tumor_wgs_bam"]
+WGS_ref: "references/hg19/hg19.seq_dic.cpickle"
+
+# Sequence parameters
+# remove reads shorter than this
+min_len: 100
+# trim all reads to this length before analysis
+trim_len: 140
+# varietal tag structure
+tag: "NNNWNNNWNNNWNNNWNNN"
+# universal primer structure
+UP2: "AAAGTTGCATGGTGCTGGT"
+# library protocol
+protocol: "MASQ"
+# For standard PCR, with no univeral primer, tag, or orientation
+#protocol: "standard PCR"
+
+# Error rates and coverage
+# Allowable hamming distances 
+# Universal primer
+UP2_hamming: 2
+# Locus specific primers
+SS_sum_hamming: 2
+# Full target sequence
+target_hamming: 2
+# Consensus rule
+base_error_rate: 0.2
+# Which coverage filters to apply
+coverage_list: [1, 2, 3, 5, 10, 15, 20]
+#coverage_list: [1] # for standard PCR, only 1
+
+# Processing options
+# Rollup tags allowing 1 error
+dorollup: True # for standard PCR, set to False
+# Mask low quality sequence bases
+mask_lowqual_bases: False
+qual_cutoff: 25
+max_N_ratio: 0.2
+filter_ns: False
+# Use edit distance instead of hamming distance
+use_edit_distance: False
+
+# For testing and debugging, option to only process X reads 
+quick_run: False
+quick_run_reads: 100000
+
+# Genome reference files
+# See make_ref_genome_pickle.py to convert FASTA to pickle
+ref_genome: "references/hg19/hg19.seq_dic.cpickle"
+
