@@ -118,6 +118,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     BASE2INT = dict([x[::-1] for x in enumerate(BASES)])
     with open(args.report_variants,'r') as f:
         var_data: dict = {}
+
         header = f.readline().strip("\n").split("\t")
         header_all.extend(['strand','read_index','read_pos','template_pos', 'expected_read_base','expected_template_base','variant_read_base','variant_template_base','A1','C1','G1','T1','A2','C2','G2','T2','VarAF'])
         regct=0

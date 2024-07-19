@@ -11,6 +11,7 @@ setuptools.setup(
     ),
     package_data={
         "masq": ["py.typed"],
+        "masq.r_scripts": ["masq_QC_plots.R"],
     },
     scripts=[
     ],
