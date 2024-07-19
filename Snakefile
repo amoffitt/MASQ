@@ -121,22 +121,6 @@ rule convert_SNV_table:
         "masq_primer_table_to_sd_table {input.oldtable} {output.newtable} {params.ref_genome}"
 
 
-# ###############################################################################
-# rule barcode_split:
-#     input:
-#         presplit_fastq1=config["presplit_fastqs"][0],
-#         presplit_fastq2=config["presplit_fastqs"][1]
-#     output:
-#         output_fastqs=expand("bc_split_fastqs/{sample}/{read}.fastq.gz",read=["r1","r2"],sample=config["samples"])
-#     params:
-#         output_dir="bc_split_fastqs/",
-#         threads=16,
-#         sample_bc_list=sample_bc_string
-#     shell:
-#         """
-#         scripts/trim_bcs.sh {params.threads} {params.output_dir} {input.presplit_fastq1} {input.presplit_fastq2} {params.sample_bc_list}
-#         """
-
 ################################################################################
 rule fastqc:
     input:
@@ -562,14 +546,22 @@ rule qc_plots:
         plot = "combined/"+config["groupname"]+".masq_QC_plots.png",
         qcfail = "combined/"+config["groupname"]+".qc_fail_loci.txt"
     run:
-        import os
-        if config["groupname"] == "test_examples_standardPCR":
-            for f in [output.plot, output.qcfail]:
-                os.makedirs(os.path.dirname(f), exist_ok=True)
-                with open(f, 'w') as empty_file:
-                    pass
-        else:
-            shell("R_LIBS=""; Rscript scripts/masq_QC_plots.R {output.plot} {output.qcfail} {input.bad_loci} {input.reports}")
+        # import os
+        # if config["groupname"] == "test_examples_standardPCR":
+        #     for f in [output.plot, output.qcfail]:
+        #         os.makedirs(os.path.dirname(f), exist_ok=True)
+        #         with open(f, 'w') as empty_file:
+        #             pass
+        # else:
+        #     shell("R_LIBS=""; Rscript scripts/masq_QC_plots.R {output.plot} {output.qcfail} {input.bad_loci} {input.reports}")
+        import masq.r_scripts
+        qc_plots_path = f"{os.path.dirname(masq.r_scripts.__file__)}/masq_QC_plots.R"
+        shell(
+            """
+            R_LIBS=""; Rscript {qc_plots_path} {output.plot} {output.qcfail} {input.bad_loci} {input.reports}
+            """
+        )
+
 ################################################################################
 
 rule filter_base_report:
