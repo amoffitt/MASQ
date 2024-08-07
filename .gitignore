@@ -8,7 +8,6 @@ venv*
 # Test run
 test_example1
 test_example2
-combined
 logs
 
 # MacOSX
