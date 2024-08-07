@@ -106,8 +106,8 @@ rule all:
         expand("{sample}/reports/{sample}.number_reads_per_tag.combined.txt", sample=config["samples"]),
         expand("{sample}/reports/{sample}.number_reads_per_tag.allregions.txt", sample=config["samples"]),
         expand("{sample}/reports/{sample}.final_report.txt", sample=config["samples"]),
-#        expand("{sample}/reports/{sample}.base_count_allbases.perbase.combined.qcfiltered.txt", sample=config["samples"]),
-#        "combined/"+config["groupname"]+".masq_QC_plots.png"
+        expand("{sample}/reports/{sample}.base_count_allbases.perbase.combined.qcfiltered.txt", sample=config["samples"]),
+        "combined/"+config["groupname"]+".masq_QC_plots.png"
 
 ################################################################################
 rule convert_SNV_table:
