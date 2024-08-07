@@ -11,7 +11,7 @@ dna_input_ng: 1000
 
 # Locus info table 
 # See example for precise format
-SNV_table: "example_inputs/locus_table.MASQ.txt"
+SNV_table: "example_inputs_masq/locus_table.MASQ.txt"
 
 # (Optional) Bad loci 
 # Loci that should be dropped from analysis for reasons not detected by automatic QC.
@@ -20,13 +20,13 @@ SNV_table: "example_inputs/locus_table.MASQ.txt"
 # FASTQs
 # Expects r1.fastq.gz and r2.fastq.gz in folder
 fastq_dirs: 
-    sample1_cellfree: "example_inputs/fastqs/sample1_cellfree"
-    sample2_cells: "example_inputs/fastqs/sample2_cells"
+    sample1_cellfree: "example_inputs_masq/fastqs/sample1_cellfree"
+    sample2_cells: "example_inputs_masq/fastqs/sample2_cells"
 
 # Whole genome or other BAM file to use to identify non-target variants
 # WGS_bam and WGS_name can be lists for multiple BAMs
 # BAM must be indexed
-WGS_bam: ["example_inputs/example_MASQ.normal.wgs.bam","example_inputs/example_MASQ.tumor.wgs.bam"]
+WGS_bam: ["example_inputs_masq/example_MASQ.normal.wgs.bam","example_inputs_masq/example_MASQ.tumor.wgs.bam"]
 WGS_name: ["normal_wgs_bam","tumor_wgs_bam"]
 WGS_ref: "references/hg19/hg19.seq_dic.cpickle"
 
@@ -76,4 +76,5 @@ quick_run_reads: 100000
 # Genome reference files
 # See make_ref_genome_pickle.py to convert FASTA to pickle
 ref_genome: "references/hg19/hg19.seq_dic.cpickle"
+
 
