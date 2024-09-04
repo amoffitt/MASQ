@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 pip install -e . > pipeline.log 2>&1
 
@@ -9,6 +9,8 @@ rm -rf test_example1
 rm -rf test_example2
 rm -rf sample1_blood
 rm -rf sample2_tumor
+rm -rf sample1_cellfree
+rm -rf sample2_cells
 rm -rf combined
 rm -rf .snakemake
 rm -rf config.yaml
