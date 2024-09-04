@@ -1,6 +1,0 @@
-Region	Reads Per Tag	Number of Tags
-Combined	4	92
-Combined	3	1145
-Combined	2	15991
-Combined	1	195849
-Combined	5	10

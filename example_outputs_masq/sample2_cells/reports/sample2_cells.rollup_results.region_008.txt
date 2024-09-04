@@ -1,2 +1,0 @@
-Region	Observed Tags	Unique Tags	Rolled-Up Tags	Avg Reads Per Unique Tag	Avg Reads Per Rolled-Up Tag	Fraction of Unique Tags that are Rolled-Up	Yield: Rolled-Up Tags
-8	943	926	925	1.0183585313174945	1.0194594594594595	0.9989200863930886	0.0033207499999999995
