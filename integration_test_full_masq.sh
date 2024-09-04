@@ -7,7 +7,8 @@ pip install -e . > pipeline.log 2>&1
 ./integration_cleanup.sh
 
 mkdir -p example_outputs
-tar zxf masq_full_example_outputs_double_counter.tar.gz -C example_outputs
+tar zxf  masq_full_example_outputs_sample1.tar.gz -C example_outputs
+tar zxf  masq_full_example_outputs_sample2.tar.gz -C example_outputs
 
 ln -s config.masq.full_example.yaml config.yaml
 
