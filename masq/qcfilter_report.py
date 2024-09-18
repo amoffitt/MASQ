@@ -8,7 +8,7 @@ import logging
 import sys
 from typing import Optional
 
-logger = logging.getLogger("masq_'qcfilter_report'")
+logger = logging.getLogger("masq_qcfilter_report")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:

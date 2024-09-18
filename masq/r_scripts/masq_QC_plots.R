@@ -20,7 +20,7 @@ N=length(args)-3
 
 # Load files and get sample name
 load_table = function(tablefile){
-  D=read.table(tablefile,sep="\t",header=T,stringsAsFactors=F)
+  D=read.table(tablefile,sep="\t",header=T,stringsAsFactors=F, fill=T)
   D$gt2templates=apply(D[,c("A2","C2","G2","T2")],1,sum)
   return(D)
 }

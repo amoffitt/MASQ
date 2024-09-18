@@ -4,19 +4,10 @@ pip install -e . > pipeline.log 2>&1
 
 ./prepare_example_references.sh
 
-rm -rf example_outputs
-rm -rf test_example1
-rm -rf test_example2
-rm -rf sample1_blood
-rm -rf sample2_tumor
-rm -rf sample1_cellfree
-rm -rf sample2_cells
-rm -rf combined
-rm -rf .snakemake
-rm -rf config.yaml
+./integration_cleanup.sh
 
 mkdir -p example_outputs
-tar zxf pcr_example_outputs_double_counter.tar.gz -C example_outputs
+tar zxf pcr_example_outputs_double_counter_qcfiltered.tar.gz -C example_outputs
 
 ln -s config.standardPCR.yaml config.yaml
 

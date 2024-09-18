@@ -3,7 +3,9 @@
 # Sample information
 groupname: "test_examples"
 # One sample, or list of samples
-samples: ["test_example1","test_example2"]
+samples: 
+- "test_example1"
+- "test_example2"
 
 # For calculating yield
 dna_input_ng: 1000
@@ -20,16 +22,16 @@ SNV_table: "example_inputs/locus_table.txt"
 # FASTQs
 # Expects r1.fastq.gz and r2.fastq.gz in folder
 fastq_dirs: 
-    test_example1: "example_inputs/fastqs/sample1"
-    test_example2: "example_inputs/fastqs/sample2"
+  test_example1: "example_inputs/fastqs/sample1"
+  test_example2: "example_inputs/fastqs/sample2"
 
 # Whole genome or other BAM file to use to identify non-target variants
 # WGS_bam and WGS_name can be lists for multiple BAMs
 # BAM must be indexed
 WGS_bam: "example_inputs/example_wgs.bam"
 WGS_name: "test_bam"
-# WGS_ref: "references/hg19/hg19.seq_dic.cpickle"
-WGS_ref_fa: "references/hg19/hg19.fa"
+
+# WGS_ref_fa: "references/hg19/hg19.fa"
 
 # Sequence parameters
 # remove reads shorter than this
@@ -74,7 +76,5 @@ quick_run: False
 quick_run_reads: 100000
 
 # Genome reference files
-# See make_ref_genome_pickle.py to convert FASTA to pickle
-ref_genome: "references/hg19/hg19.seq_dic.cpickle"
 ref_genome_fa: "references/hg19/hg19.fa"
 

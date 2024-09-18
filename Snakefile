@@ -147,7 +147,7 @@ rule check_loci_extend_and_plot:
         plots = expand("{{sample}}/plots/{{sample}}.WGS_varfreqs.{region}.png", region=config["regions"])
     params:
         wgs_name = config["WGS_name"],
-        wgs_ref_fa = config["WGS_ref_fa"],
+        ref_genome_fa = config["ref_genome_fa"],
     log:
         "{sample}/logs/check_loci_plot_and_extend.log"
     run:
@@ -158,7 +158,7 @@ rule check_loci_extend_and_plot:
         masq_check_loci_plot_and_extend --snv-table {input.SNV_table} \
             --wgs-bam-files {bam_files:q} \
             --wgs-bam-names {bam_names:q} \
-            --ref-genome {params.wgs_ref_fa} \
+            --ref-genome {params.ref_genome_fa} \
             --output-snv-table {output.new_SNV_table} \
             {output.plots}
         """

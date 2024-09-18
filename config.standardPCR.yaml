@@ -4,7 +4,9 @@
 # Sample information
 groupname: "test_examples_standardPCR"
 # One sample, or list of samples
-samples: ["sample1_blood","sample2_tumor"]
+samples: 
+- "sample1_blood"
+- "sample2_tumor"
 
 # For calculating yield
 dna_input_ng: 1000
@@ -21,16 +23,21 @@ SNV_table: "example_inputs/locus_table.standardPCR.txt"
 # FASTQs
 # Expects r1.fastq.gz and r2.fastq.gz in folder
 fastq_dirs: 
-    sample1_blood: "example_inputs/fastqs/sample1_blood"
-    sample2_tumor: "example_inputs/fastqs/sample2_tumor"
+  sample1_blood: "example_inputs/fastqs/sample1_blood"
+  sample2_tumor: "example_inputs/fastqs/sample2_tumor"
 
 # Whole genome or other BAM file to use to identify non-target variants
 # WGS_bam and WGS_name can be lists for multiple BAMs
 # BAM must be indexed
-WGS_bam: ["example_inputs/example_standardPCR.normal.wgs.bam","example_inputs/example_standardPCR.tumor.wgs.bam"]
-WGS_name: ["normal_wgs_bam","tumor_wgs_bam"]
-# WGS_ref: "references/hg19/hg19.seq_dic.cpickle"
-WGS_ref_fa: "references/hg19/hg19.fa"
+WGS_bam: 
+- "example_inputs/example_standardPCR.normal.wgs.bam"
+- "example_inputs/example_standardPCR.tumor.wgs.bam"
+
+WGS_name: 
+- "normal_wgs_bam"
+- "tumor_wgs_bam"
+
+# WGS_ref_fa: "references/hg19/hg19.fa"
 
 # Sequence parameters
 # remove reads shorter than this
@@ -41,6 +48,7 @@ trim_len: 140
 tag: "NNNWNNNWNNNWNNNWNNN"
 # universal primer structure
 UP2: "AAAGTTGCATGGTGCTGGT"
+
 # library protocol
 #protocol: "MASQ"
 # For standard PCR, with no univeral primer, tag, or orientation
@@ -56,6 +64,7 @@ SS_sum_hamming: 2
 target_hamming: 2
 # Consensus rule
 base_error_rate: 0.2
+
 # Which coverage filters to apply
 #coverage_list: [1, 2, 3, 5, 10, 15, 20]
 coverage_list: [1] # for standard PCR, only 1
@@ -63,6 +72,7 @@ coverage_list: [1] # for standard PCR, only 1
 # Processing options
 # Rollup tags allowing 1 error
 dorollup: False # for standard PCR, set to False
+
 # Mask low quality sequence bases
 mask_lowqual_bases: False
 qual_cutoff: 25
@@ -76,6 +86,4 @@ quick_run: False
 quick_run_reads: 100000
 
 # Genome reference files
-# See make_ref_genome_pickle.py to convert FASTA to pickle
-ref_genome: "references/hg19/hg19.seq_dic.cpickle"
 ref_genome_fa: "references/hg19/hg19.fa"

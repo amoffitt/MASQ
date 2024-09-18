@@ -31,6 +31,8 @@ setuptools.setup(
     masq_all_base_report=masq.all_base_report:main
     masq_qcfilter_report=masq.qcfilter_report:main
 
+    masq_project=masq.project_setup:main
+
     masq_select_enzymes_for_snps=masq.primer_design.select_enzymes_for_snps:main
     """,
     classifiers=[
