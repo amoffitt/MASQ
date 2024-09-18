@@ -572,7 +572,14 @@ rule filter_base_report:
         filtered_base_report = "{sample}/reports/{sample}.base_count_allbases.perbase.combined.qcfiltered.txt"
     log:
         "{sample}/logs/filter_base_report.log"
-    script:
-        "scripts/qcfilter_report.py"
+    shell:
+        """
+        masq_qcfilter_report \
+            --qcfail-report {input.qcfail} \
+            --base-report {input.base_report} \
+            --filtered-base-report {output.filtered_base_report}
+        """
+    # script:
+    #     "scripts/qcfilter_report.py"
 
 
