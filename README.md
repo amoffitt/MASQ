@@ -30,19 +30,22 @@ pip install -e .
 
 ### Setup the reference genome
 
+To work with `MASQ` package you will need a reference genome.
+
 To download and prepare the reference genome used by MASQ package and scripts
 run the following command:
 
 ```bash
 bash ./prepare_example_references.sh
 ```
-This command should create a subdirectory `references/hg19` that contains
-`hg19` reference genome, it's pickled version, and a fasta index:
+This command creates a subdirectory `references/hg19` that contains
+`hg19` reference genome and a fasta index:
 
 ```
-├── hg19.fa
-├── hg19.fa.fai
-└── hg19.seq_dic.cpickle
+references/
+└── hg19
+    ├── hg19.fa
+    └── hg19.fa.fai
 ```
 
 ### MASQ Analysis
@@ -58,16 +61,35 @@ Example files include small snippets of FASTQ and BAM files, and a
 corresponding example locus table. The configuration files are included 
 to run the example analysis. 
 
+### Setup MASQ project
+
+To setup a MASQ project you should choose a directory and run
+
+```
+masq_project
+```
+
+command. This command will create a `Snakefile` and `config.yaml` file inside
+the directory you are running it. 
+
+After that you need to edit the `config.yaml` configuration file to describe
+your project. You can check examples configuration files (see `examples` 
+subdirectory) for examples how to configure your project.
+
+When the project is configured you can run the MASQ pipeline using:
+
+```
+snakemake -j
+```
+
 
 #### Run `MASQ` example
 
-The `MASQ` example is defined by the `config.masq.yaml` configuration file.
-Create a symbolic link to this file named `config.yaml`:
+You can look into `examples/masq_example` for example how to configure MASQ 
+pipeline. 
 
-```bash
-ln -sf config.masq.yaml config.yaml
-```
-and after that run the snakemake command:
+If you enter into `examples/masq_example` directory you can run the MASQ
+piplene using:
 
 ```bash
 snakemake -j

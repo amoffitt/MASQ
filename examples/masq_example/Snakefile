@@ -1,4 +1,3 @@
-
 configfile: "config.yaml" # loads info as config dictionary
 
 # one sample name
@@ -61,10 +60,10 @@ if "barcodes" in config:
             x=line.strip().split(":")
             barcode_dict[int(x[0])]=x[1]
     # get sample barcode list string
-    sample_bc_string="""
+    sample_bc_string="\""
     for S,bc in config["barcodes"].items():
         sample_bc_string=sample_bc_string+S+":"+barcode_dict[bc]+" "
-    sample_bc_string=sample_bc_string+"""
+    sample_bc_string=sample_bc_string+"\""
     # Only works for one barcode group per sample
     config["fastq_dirs"]=dict()
     for S in config["samples"]:
@@ -156,7 +155,12 @@ rule check_loci_extend_and_plot:
         bam_names = " ".join(params.wgs_name if isinstance(params.wgs_name,list) else [params.wgs_name])
         shell(
         """
-        masq_check_loci_plot_and_extend --snv-table {input.SNV_table}             --wgs-bam-files {bam_files:q}             --wgs-bam-names {bam_names:q}             --ref-genome {params.ref_genome_fa}             --output-snv-table {output.new_SNV_table}             {output.plots}
+        masq_check_loci_plot_and_extend --snv-table {input.SNV_table} \
+            --wgs-bam-files {bam_files:q} \
+            --wgs-bam-names {bam_names:q} \
+            --ref-genome {params.ref_genome_fa} \
+            --output-snv-table {output.new_SNV_table} \
+            {output.plots}
         """
         )
 
@@ -200,7 +204,18 @@ rule sort_data_by_tag_and_locus:
 
         shell(
             """
-            masq_sort_data_by_tag_and_locus  --fastq1 {input.fastq1}             --fastq2 {input.fastq2}             --snv-table {input.SNV_table}             --vt-counters {vt_counters:q}             --vt-seq-counters {vt_seq_counters:q}             --flip-counters {flip_counters:q}             --ss-hamming-plot {output.ss_hamming_plot}             --counter-report {output.counter_report}             --up2-unmatched-report {output.up2_unmatched_report}             --ss1ss2-unmatched-report {output.ss1ss2_unmatched_report}             --goodtag-report {output.goodtag_report}             --badtag-report {output.badtag_report}
+            masq_sort_data_by_tag_and_locus  --fastq1 {input.fastq1} \
+            --fastq2 {input.fastq2} \
+            --snv-table {input.SNV_table} \
+            --vt-counters {vt_counters:q} \
+            --vt-seq-counters {vt_seq_counters:q} \
+            --flip-counters {flip_counters:q} \
+            --ss-hamming-plot {output.ss_hamming_plot} \
+            --counter-report {output.counter_report} \
+            --up2-unmatched-report {output.up2_unmatched_report} \
+            --ss1ss2-unmatched-report {output.ss1ss2_unmatched_report} \
+            --goodtag-report {output.goodtag_report} \
+            --badtag-report {output.badtag_report}
 
             """
         )
@@ -240,7 +255,18 @@ rule all_base_report:
         "{sample}/logs/all_base_report.{region}.log"
     shell:
         """
-        masq_all_base_report          --vt-counter {input.vt_counter}         --vt-seq-counter {input.vt_seq_counter}         --flip-counter {input.flip_counter}         --base-count-report {output.base_count_report}         --base-count-report-per-base {output.base_count_report_per_base}         --alignment-report {output.alignment_report}         --within-tag-errors {output.withintagerrors}         --within-tag-errors-table {output.withintagerrors_table}         --unaligned-reads {output.unaligned_reads}         --snv-table {params.SNV_table}         --region {params.region}
+        masq_all_base_report  \
+        --vt-counter {input.vt_counter} \
+        --vt-seq-counter {input.vt_seq_counter} \
+        --flip-counter {input.flip_counter} \
+        --base-count-report {output.base_count_report} \
+        --base-count-report-per-base {output.base_count_report_per_base} \
+        --alignment-report {output.alignment_report} \
+        --within-tag-errors {output.withintagerrors} \
+        --within-tag-errors-table {output.withintagerrors_table} \
+        --unaligned-reads {output.unaligned_reads} \
+        --snv-table {params.SNV_table} \
+        --region {params.region}
         """
 
     # script:
@@ -259,7 +285,9 @@ rule combine_within_tag_errors:
         within_tag_errors = " ".join(input.within_tag_error_pickles)
         shell(
             """
-            masq_combine_within_tag_err  --within-tag-errors {within_tag_errors:q}                 --output-table1 {output.within_tag_table1}                 --output-table2 {output.within_tag_table2}
+            masq_combine_within_tag_err  --within-tag-errors {within_tag_errors:q} \
+                --output-table1 {output.within_tag_table1} \
+                --output-table2 {output.within_tag_table2}
             """
         )
 
@@ -279,7 +307,12 @@ rule tag_count_graphs_per_region:
         "{sample}/logs/tag_counts_per_region.{region}.log"
     shell:
         """
-        masq_tag_count_graphs --vt-counter {input.vt_counter}             --plot1 {output.plot1}             --plot2 {output.plot2}             --output {output.tagcounts}             --region {params.region}             --sample {params.sample}
+        masq_tag_count_graphs --vt-counter {input.vt_counter} \
+            --plot1 {output.plot1} \
+            --plot2 {output.plot2} \
+            --output {output.tagcounts} \
+            --region {params.region} \
+            --sample {params.sample}
         """
 
 ################################################################################
@@ -299,7 +332,12 @@ rule tag_count_graphs_combined:
         vt_counter_filenames = " ".join(input.vt_counters)
         shell(
             """
-            masq_tag_count_graphs_allregions                 --vt-counters {vt_counter_filenames:q}                 --output {output.tagcounts}                 --plot1 {output.plot1}                 --plot2 {output.plot2}                 --sample {params.sample}
+            masq_tag_count_graphs_allregions \
+                --vt-counters {vt_counter_filenames:q} \
+                --output {output.tagcounts} \
+                --plot1 {output.plot1} \
+                --plot2 {output.plot2} \
+                --sample {params.sample}
             """
         )
 
@@ -323,7 +361,16 @@ rule rollup_tags:
         "{sample}/logs/rollup_tags.region_{region}.log"
     shell:
         """
-        masq_collapse_tags --vt-counter {input.vt_counter}             --vt-seq-counter {input.vt_seq_counter}             --flip-counter {input.flip_counter}             --output-vt-counter {output.vt_counter}             --output-vt-seq-counter {output.vt_seq_counter}             --output-flip-counter {output.flip_counter}             --output {output.tagcounts}             --region {params.region}             --sample {params.sample}             --dna-input-ng {params.dna_input_ng}
+        masq_collapse_tags --vt-counter {input.vt_counter} \
+            --vt-seq-counter {input.vt_seq_counter} \
+            --flip-counter {input.flip_counter} \
+            --output-vt-counter {output.vt_counter} \
+            --output-vt-seq-counter {output.vt_seq_counter} \
+            --output-flip-counter {output.flip_counter} \
+            --output {output.tagcounts} \
+            --region {params.region} \
+            --sample {params.sample} \
+            --dna-input-ng {params.dna_input_ng}
         """
 
 ################################################################################
@@ -339,7 +386,9 @@ rule combine_reports_alignment:
         region_filenames = " ".join(input.region_reports)
         shell(
             """
-            masq_combine_reports                 --region-reports {region_filenames:q}                 --combined-report {output.combined_report}
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
             """
         )
 
@@ -357,7 +406,9 @@ rule combine_reports_basecount:
         region_filenames = " ".join(input.region_reports)
         shell(
             """
-            masq_combine_reports                 --region-reports {region_filenames:q}                 --combined-report {output.combined_report}
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
             """
         )
 
@@ -374,7 +425,9 @@ rule combine_reports_per_base:
         region_filenames = " ".join(input.region_reports)
         shell(
             """
-            masq_combine_reports                 --region-reports {region_filenames:q}                 --combined-report {output.combined_report}
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
             """
         )
 
@@ -391,7 +444,9 @@ rule combine_reports_rollup:
         region_filenames = " ".join(input.region_reports)
         shell(
             """
-            masq_combine_reports                 --region-reports {region_filenames:q}                 --combined-report {output.combined_report}
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
             """
         )
 
@@ -409,7 +464,9 @@ rule combine_reports_readspertag:
         region_filenames = " ".join(input.region_reports)
         shell(
             """
-            masq_combine_reports                 --region-reports {region_filenames:q}                 --combined-report {output.combined_report}
+            masq_combine_reports \
+                --region-reports {region_filenames:q} \
+                --combined-report {output.combined_report}
             """
         )
 
@@ -424,7 +481,9 @@ rule extract_variant_bases_from_report:
         "{sample}/logs/extract_variant_info.log"
     shell:
         """
-        masq_extract_variant_info             --combined-report {input.combined_report}             --variant-report {output.variant_report}
+        masq_extract_variant_info \
+            --combined-report {input.combined_report} \
+            --variant-report {output.variant_report}
         """
 
 ################################################################################
@@ -440,7 +499,10 @@ rule plot_rollup_results:
         "{sample}/logs/plot_rollup_results.log"
     shell:
         """
-        masq_plot_rollup_results             --combined-report {input.combined_report}             --plot1 {output.plot1}             --sample {params.sample}
+        masq_plot_rollup_results \
+            --combined-report {input.combined_report} \
+            --plot1 {output.plot1} \
+            --sample {params.sample}
         """
 
 ################################################################################
@@ -458,7 +520,13 @@ rule final_report:
         "{sample}/logs/final_report.log"
     shell:
         """
-        masq_final_report             --input-snv-table {input.input_snv_table}             --report-primers {input.report_primers}             --report-rollup {input.report_rollup}             --report-alignment {input.report_alignment}             --report-variants {input.report_variants}             --combined-report {output.combined_report}
+        masq_final_report \
+            --input-snv-table {input.input_snv_table} \
+            --report-primers {input.report_primers} \
+            --report-rollup {input.report_rollup} \
+            --report-alignment {input.report_alignment} \
+            --report-variants {input.report_variants} \
+            --combined-report {output.combined_report}
         """
 
 ################################################################################
@@ -468,8 +536,7 @@ rule bad_loci:
         with open(output[0],'w') as f:
             if "bad_loci" in config:
                 for loc in config["bad_loci"]:
-                    f.write(str(loc)+"
-")
+                    f.write(str(loc)+"\n")
 
 rule qc_plots:
     input:
@@ -507,10 +574,12 @@ rule filter_base_report:
         "{sample}/logs/filter_base_report.log"
     shell:
         """
-        masq_qcfilter_report             --qcfail-report {input.qcfail}             --base-report {input.base_report}             --filtered-base-report {output.filtered_base_report}
+        masq_qcfilter_report \
+            --qcfail-report {input.qcfail} \
+            --base-report {input.base_report} \
+            --filtered-base-report {output.filtered_base_report}
         """
     # script:
     #     "scripts/qcfilter_report.py"
-
 
 

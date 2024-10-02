@@ -9,10 +9,6 @@ if [[ ! -f hg19.fa ]]; then
     gunzip hg19.fa.gz
 fi
 
-# if [[ ! -f hg19.seq_dic.cpickle ]]; then
-#     python ../../scripts/make_ref_genome_pickle.py hg19.fa hg19.seq_dic.cpickle
-# fi
-
 if [[ ! -f hg19.fa.fai ]]; then
     samtools faidx hg19.fa
 fi
