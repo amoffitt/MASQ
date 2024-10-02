@@ -16,3 +16,9 @@ rm -rf examples/masq_example/sample1_cellfree
 rm -rf examples/masq_example/sample2_cells
 rm -rf examples/masq_example/combined
 rm -rf examples/masq_example/pipeline.log
+
+rm -rf examples/pcr_example/.snakemake
+rm -rf examples/pcr_example/sample1_blood
+rm -rf examples/pcr_example/sample2_tumor
+rm -rf examples/pcr_example/combined
+rm -rf examples/pcr_example/pipeline.log

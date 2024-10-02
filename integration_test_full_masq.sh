@@ -10,8 +10,6 @@ mkdir -p example_outputs
 tar zxf  masq_full_example_outputs_sample1.tar.gz -C example_outputs
 tar zxf  masq_full_example_outputs_sample2.tar.gz -C example_outputs
 
-ln -s config.masq.full_example.yaml config.yaml
-
 cd examples/masq_example
 snakemake -j > pipeline.log 2>&1
 cd -

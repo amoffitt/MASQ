@@ -14,7 +14,7 @@ dna_input_ng: 1000
 
 # Locus info table 
 # See example for precise format
-SNV_table: "example_inputs/locus_table.standardPCR.txt"
+SNV_table: "data/locus_table.standardPCR.txt"
 
 # (Optional) Bad loci 
 # Loci that should be dropped from analysis for reasons not detected by automatic QC.
@@ -23,15 +23,15 @@ SNV_table: "example_inputs/locus_table.standardPCR.txt"
 # FASTQs
 # Expects r1.fastq.gz and r2.fastq.gz in folder
 fastq_dirs: 
-  sample1_blood: "example_inputs/fastqs/sample1_blood"
-  sample2_tumor: "example_inputs/fastqs/sample2_tumor"
+  sample1_blood: "data/fastqs/sample1_blood"
+  sample2_tumor: "data/fastqs/sample2_tumor"
 
 # Whole genome or other BAM file to use to identify non-target variants
 # WGS_bam and WGS_name can be lists for multiple BAMs
 # BAM must be indexed
 WGS_bam: 
-- "example_inputs/example_standardPCR.normal.wgs.bam"
-- "example_inputs/example_standardPCR.tumor.wgs.bam"
+- "data/example_standardPCR.normal.wgs.bam"
+- "data/example_standardPCR.tumor.wgs.bam"
 
 WGS_name: 
 - "normal_wgs_bam"
@@ -86,4 +86,4 @@ quick_run: False
 quick_run_reads: 100000
 
 # Genome reference files
-ref_genome_fa: "references/hg19/hg19.fa"
+ref_genome_fa: "../../references/hg19/hg19.fa"

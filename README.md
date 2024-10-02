@@ -48,6 +48,9 @@ references/
     └── hg19.fa.fai
 ```
 
+Alternatively you can download a reference genome and run
+`samtools faidx` over the genome fasta file to create a fasta index file.
+
 ### MASQ Analysis
 
 The MASQ analysis pipeline is contained in a Snakemake workflow 
@@ -61,7 +64,7 @@ Example files include small snippets of FASTQ and BAM files, and a
 corresponding example locus table. The configuration files are included 
 to run the example analysis. 
 
-### Setup MASQ project
+### Setup MASQ project and run the MASQ pipeline
 
 To setup a MASQ project you should choose a directory and run
 
@@ -85,7 +88,7 @@ snakemake -j
 
 #### Run `MASQ` example
 
-You can look into `examples/masq_example` for example how to configure MASQ 
+You can look into `examples/masq_example` for an example how to configure MASQ 
 pipeline. 
 
 If you enter into `examples/masq_example` directory you can run the MASQ
@@ -97,13 +100,10 @@ snakemake -j
 
 #### Run `PCR` example
 
-The `PCR` example is defined by the `config.standardPCR.yaml` configuration file.
-Create a symbolic link to this file named `config.yaml`:
+The `PCR` example is setup in `examples/pcr_example` subdirectory.
 
-```bash
-ln -sf config.standardPCR.yaml config.yaml
-```
-and after that run the snakemake command:
+If you enter into `examples/pcr_example` directory you can run the MASQ pipeline
+using:
 
 ```bash
 snakemake -j
