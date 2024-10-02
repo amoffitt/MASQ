@@ -10,3 +10,9 @@ rm -rf sample2_cells
 rm -rf combined
 rm -rf .snakemake
 rm -rf config.yaml
+
+rm -rf examples/masq_example/.snakemake
+rm -rf examples/masq_example/sample1_cellfree
+rm -rf examples/masq_example/sample2_cells
+rm -rf examples/masq_example/combined
+rm -rf examples/masq_example/pipeline.log
