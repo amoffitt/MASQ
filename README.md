@@ -85,6 +85,7 @@ When the project is configured you can run the MASQ pipeline using:
 snakemake -j
 ```
 
+### MASQ pipeline examples
 
 #### Run `MASQ` example
 
