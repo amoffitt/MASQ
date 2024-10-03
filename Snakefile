@@ -403,6 +403,8 @@ rule final_report:
         report_variants = "{sample}/reports/{sample}.base_count_variantbasesonly.txt",
     output:
         combined_report="{sample}/reports/{sample}.final_report.txt"
+    params:
+        protocol = config["protocol"]
     log:
         "{sample}/logs/final_report.log"
     script:
@@ -424,15 +426,19 @@ rule qc_plots:
     output:
         plot = "combined/"+config["groupname"]+".masq_QC_plots.png",
         qcfail = "combined/"+config["groupname"]+".qc_fail_loci.txt"
+    params:
+        protocol = '"{}"'.format(config["protocol"])
     run:
-        import os
-        if config["groupname"] == "test_examples_standardPCR":
-            for f in [output.plot, output.qcfail]:
-                os.makedirs(os.path.dirname(f), exist_ok=True)
-                with open(f, 'w') as empty_file:
-                    pass
-        else:
-            shell("R_LIBS=""; Rscript scripts/masq_QC_plots.R {output.plot} {output.qcfail} {input.bad_loci} {input.reports}")
+        shell("R_LIBS=""; Rscript scripts/masq_QC_plots.R {output.plot} {output.qcfail} {input.bad_loci} {params.protocol} {input.reports}")
+
+        #import os
+        #if config["groupname"] == "test_examples_standardPCR":
+        #    for f in [output.plot, output.qcfail]:
+        #        os.makedirs(os.path.dirname(f), exist_ok=True)
+        #        with open(f, 'w') as empty_file:
+         #           pass
+        #else:
+        #    shell("R_LIBS=""; Rscript scripts/masq_QC_plots.R {output.plot} {output.qcfail} {input.bad_loci} {input.reports}")
 ################################################################################
 
 rule filter_base_report:
