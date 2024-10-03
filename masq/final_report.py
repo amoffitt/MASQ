@@ -23,6 +23,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Extended SNV table filename",
     )
     parser.add_argument(
+        "--protocol",
+        help="Sequencing protocol",
+        choices=["standard PCR", "MASQ"],
+    )
+    parser.add_argument(
         "--report-primers",
         help="Primer counters report filename",
     )
@@ -62,6 +67,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     logger.info('Combining reports')
     header_all = []
     data_all = []
+    protocol = args.protocol
 
     with open(args.input_snv_table,'r') as f:
         header = f.readline().strip("\n").split("\t")
@@ -98,20 +104,24 @@ def main(argv: Optional[list[str]] = None) -> None:
         header = f.readline().strip("\n").split("\t")[2:]
         header_all.extend(header)
         align_data: dict = {}
-        regct=0
+        regct = 0
         for line in f:
             x = line.strip("\n").split("\t")
-            reg=int(x[0])
+            reg = int(x[0])
             if reg in align_data:
-                align_data[reg] = [int(x[2]),int(x[3]),float(x[4]),int(x[5]),int(x[6]) + align_data[reg][4] ,float(x[7]) + align_data[reg][5]]
+                align_data[reg] = [
+                    int(x[2]), int(x[3]), float(x[4]), int(x[5]),
+                    int(x[6]) + align_data[reg][4], float(x[7]) + align_data[reg][5]
+                ]
             else:
-                align_data[reg] = [int(x[2]),int(x[3]),float(x[4]),int(x[5]),int(x[6]),float(x[7])]
-                regct+=1
-        c=0
-        for reg in range(regct):
-            y=align_data[reg]
-            data_all[c].extend(y)
-            c+=1
+                align_data[reg] = [int(x[2]), int(x[3]), float(x[4]), int(x[5]), int(x[6]), float(x[7])]
+                regct += 1
+    c = 0
+    for reg in range(regct):
+        y = align_data[reg]
+        data_all[c].extend(y)
+        c += 1
+
 
 
     BASES = ["A", "C", "G", "T"]
@@ -120,58 +130,61 @@ def main(argv: Optional[list[str]] = None) -> None:
         var_data: dict = {}
 
         header = f.readline().strip("\n").split("\t")
-        header_all.extend(['strand','read_index','read_pos','template_pos', 'expected_read_base','expected_template_base','variant_read_base','variant_template_base','A1','C1','G1','T1','A2','C2','G2','T2','VarAF'])
-        regct=0
+
+        # Ensure the header always has 47 columns, regardless of protocol
+        header_all.extend([
+            'strand', 'read_index', 'read_pos', 'template_pos',
+            'expected_read_base', 'expected_template_base',
+            'variant_read_base', 'variant_template_base',
+            'A1', 'C1', 'G1', 'T1', 'A2', 'C2', 'G2', 'T2', 'VarAF'
+        ])
+
+        regct = 0
         for line in f:
             x = line.strip("\n").split("\t")
-
             locus = x[1]
             ref_index = x[2]
             strand = x[3]
             read = x[4]
             poss = x[5:7]
             bases = x[7:11]
-            onecounts = list(map(int,x[11:15]))
-            twocounts = list(map(int,x[15:19]))
-            if (sum(twocounts)>0) and (bases[2] in BASES):
-                altbase = BASE2INT[bases[2]]
-                varaf = float(twocounts[altbase])/sum(twocounts)
+            onecounts = list(map(int, x[11:15]))
+            if protocol == "standard PCR":
+                # Always calculate VarAF based on onecounts for standard PCR
+                altbase = BASE2INT.get(bases[2], 0)  # Default to 0 if base not found
+                varaf = float(onecounts[altbase]) / sum(onecounts) if sum(onecounts) > 0 else 0
             else:
-                varaf = 0
+                twocounts = list(map(int, x[15:19]))
+                if sum(twocounts) > 0 and bases[2] in BASES:
+                    altbase = BASE2INT[bases[2]]
+                    varaf = float(twocounts[altbase]) / sum(twocounts)
+                else:
+                    varaf = 0
 
             if locus in var_data:
-                if (var_data[locus][0] != ref_index) and (var_data[locus][2] == read): # combine counts
-                    prevcounts1 = var_data[locus][9:13]
-                    prevcounts2 = var_data[locus][13:17]
-                    var_data[locus] = [ref_index,strand,read]
-                    var_data[locus].extend(poss)
-                    var_data[locus].extend(bases)
-                    newcounts1 = [a+b for a,b in zip(onecounts,prevcounts1)]
-                    newcounts2 = [a+b for a,b in zip(twocounts,prevcounts2)]
-                    if (sum(newcounts2)>0) and (bases[2] in BASES):
-                        altbase = BASE2INT[bases[2]]
-                        newvaraf = float(newcounts2[altbase])/sum(newcounts2)
-                    else:
-                        newvaraf = 0
-                    var_data[locus].extend(newcounts1)
-                    var_data[locus].extend(newcounts2)
-                    var_data[locus].append(newvaraf)
+                prevcounts1 = var_data[locus][9:13]
+                prevcounts2 = var_data[locus][13:17] if protocol != "standard PCR" else [0, 0, 0, 0]
+                newcounts1 = [a + b for a, b in zip(onecounts, prevcounts1)]
+                newcounts2 = [a + b for a, b in zip(twocounts, prevcounts2)] if protocol != "standard PCR" else [0, 0, 0, 0]
+                newvaraf = float(newcounts2[altbase]) / sum(newcounts2) if sum(newcounts2) > 0 and protocol != "standard PCR" else varaf
+                var_data[locus][9:13] = newcounts1
+                var_data[locus][13:17] = newcounts2
+                var_data[locus][-1] = newvaraf
                 # skip other read entry
             else: # first entry
-                var_data[locus] = [ref_index,strand,read]
+                var_data[locus] = [ref_index, strand, read]
                 var_data[locus].extend(poss)
                 var_data[locus].extend(bases)
                 var_data[locus].extend(onecounts)
-                var_data[locus].extend(twocounts)
+                var_data[locus].extend([0, 0, 0, 0])  # Placeholder twocounts for standard PCR
                 var_data[locus].append(varaf)
-                regct+=1
+                regct += 1
 
-        c=0
+
+        c = 0
         for reg in range(regct):
-            if str(reg) in var_data:
-                # if reads were too short to cover variant this will fail,
-                # so check first
-                y=var_data[str(reg)][1:]
+            if str(reg) in var_data: # if reads were too short to cover variant this will fail, so check first
+                y = var_data[str(reg)][1:]
                 data_all[c].extend(y)
             else: 
                 logger.info(
