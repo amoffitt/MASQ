@@ -111,33 +111,50 @@ with open(snakemake.input.report_variants, 'r') as f:
         bases = x[7:11]
         onecounts = list(map(int, x[11:15]))
         if protocol == "standard PCR":
+            twocounts = [0, 0, 0, 0]
+            if (sum(onecounts)>0) and (bases[2] in BASES):
             # Always calculate VarAF based on onecounts for standard PCR
-            altbase = BASE2INT.get(bases[2], 0)  # Default to 0 if base not found
-            varaf = float(onecounts[altbase]) / sum(onecounts) if sum(onecounts) > 0 else 0
+                altbase = BASE2INT[bases[2]]
+                varaf = float(onecounts[altbase])/sum(onecounts)
+            else:
+                varaf = 0
         else:
             twocounts = list(map(int, x[15:19]))
-            if sum(twocounts) > 0 and bases[2] in BASES:
+            if (sum(twocounts) > 0) and (bases[2] in BASES):
                 altbase = BASE2INT[bases[2]]
-                varaf = float(twocounts[altbase]) / sum(twocounts)
+                varaf = float(twocounts[altbase])/sum(twocounts)
             else:
                 varaf = 0
 
         if locus in var_data:
-            prevcounts1 = var_data[locus][9:13]
-            prevcounts2 = var_data[locus][13:17] if protocol != "standard PCR" else [0, 0, 0, 0]
-            newcounts1 = [a + b for a, b in zip(onecounts, prevcounts1)]
-            newcounts2 = [a + b for a, b in zip(twocounts, prevcounts2)] if protocol != "standard PCR" else [0, 0, 0, 0]
-            newvaraf = float(newcounts2[altbase]) / sum(newcounts2) if sum(newcounts2) > 0 and protocol != "standard PCR" else varaf
-            var_data[locus][9:13] = newcounts1
-            var_data[locus][13:17] = newcounts2
-            var_data[locus][-1] = newvaraf
-            # skip other read entry
+            if (var_data[locus][0] != ref_index) and (var_data[locus][2] == read): # combine counts    
+                prevcounts1 = var_data[locus][9:13]
+                prevcounts2 = var_data[locus][13:17] if protocol != "standard PCR" else [0, 0, 0, 0]
+                var_data[locus] = [ref_index,strand,read]
+                var_data[locus].extend(poss)
+                var_data[locus].extend(bases)
+                newcounts1 = [a + b for a, b in zip(onecounts, prevcounts1)]
+                newcounts2 = [a + b for a, b in zip(twocounts, prevcounts2)]
+                if (sum(newcounts2)>0) and (bases[2] in BASES):
+                    altbase = BASE2INT[bases[2]]
+                    newvaraf = float(newcounts2[altbase])/sum(newcounts2)
+                else:
+                    newvaraf = 0
+                if (protocol == "standard PCR") and (sum(newcounts1)>0) and (bases[2] in BASES):
+                    altbase = BASE2INT[bases[2]]
+                    newvaraf = float(newcounts1[altbase])/sum(newcounts1)
+                else:
+                    newvaraf = 0
+                var_data[locus].extend(newcounts1)
+                var_data[locus].extend(newcounts2)
+                var_data[locus].append(newvaraf)
+                # skip other read entry
         else: # first entry
             var_data[locus] = [ref_index, strand, read]
             var_data[locus].extend(poss)
             var_data[locus].extend(bases)
             var_data[locus].extend(onecounts)
-            var_data[locus].extend([0, 0, 0, 0])  # Placeholder twocounts for standard PCR
+            var_data[locus].extend(twocounts)
             var_data[locus].append(varaf)
             regct += 1
 
@@ -160,6 +177,7 @@ with open(output_file, "w") as outfile:
         outfile.write(tabprint(data) + "\n")
 
 ########################################################################
+
 # End timer
 t1 = time.time()
 td = (t1 - t0) / 60
