@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-rm -rf example_outputs
+rm -rf examples_output/outputs
 rm -rf test_example1
 rm -rf test_example2
 rm -rf sample1_blood
