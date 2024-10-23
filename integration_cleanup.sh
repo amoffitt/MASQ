@@ -22,3 +22,9 @@ rm -rf examples/pcr_example/sample1_blood
 rm -rf examples/pcr_example/sample2_tumor
 rm -rf examples/pcr_example/combined
 rm -rf examples/pcr_example/pipeline.log
+
+rm -rf examples/small_masq_example/.snakemake
+rm -rf examples/small_masq_example/combined
+rm -rf examples/small_masq_example/pipeline.log
+rm -rf examples/small_masq_example/test_example1
+rm -rf examples/small_masq_example/test_example2

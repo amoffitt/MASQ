@@ -7,7 +7,7 @@ pip install -e . > pipeline.log 2>&1
 ./integration_cleanup.sh
 
 mkdir -p example_outputs
-tar zxf pcr_example_outputs_double_counter_qcfiltered.tar.gz -C example_outputs
+tar zxf pcr_example_outputs_fixed.tar.gz -C example_outputs
 
 
 cd examples/pcr_example
