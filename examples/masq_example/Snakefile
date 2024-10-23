@@ -181,20 +181,6 @@ rule sort_data_by_tag_and_locus:
         ss1ss2_unmatched_report="{sample}/reports/{sample}.unmatched_SS1_SS2_seqs.txt",
         goodtag_report="{sample}/reports/{sample}.good_tags.txt",
         badtag_report="{sample}/reports/{sample}.bad_tags.txt"
-    # params:
-    #     min_len= config["min_len"],
-    #     trim_len= config["trim_len"],
-    #     SS_sum_hamming= config["SS_sum_hamming"],
-    #     UP2_hamming= config["UP2_hamming"],
-    #     tag= config["tag"],
-    #     UP2= config["UP2"],
-    #     protocol= config["protocol"],
-    #     quick_run= config["quick_run"],
-    #     quick_run_reads = config["quick_run_reads"],
-    #     mask_lowqual_bases = config["mask_lowqual_bases"],
-    #     qual_cutoff = config["qual_cutoff"],
-    #     max_N_ratio = config["max_N_ratio"],
-    #     use_edit_distance = config["use_edit_distance"]
     log:
         "{sample}/logs/sort_data_by_tag_and_locus.log"
     run:
@@ -220,9 +206,6 @@ rule sort_data_by_tag_and_locus:
             """
         )
 
-    # script:
-    #     "scripts/sort_data_by_tag_and_locus.py"
-
 ################################################################################
 
 rule all_base_report:
@@ -240,17 +223,6 @@ rule all_base_report:
     params:
         SNV_table=lambda wildcards: wildcards.sample+"/extended_var_table.txt",
         region = lambda wildcards: wildcards.region,
-        # target_hamming = config["target_hamming"],
-        # base_error_rate = config["base_error_rate"],
-        # coverage_list = config["coverage_list"],
-        # mask_lowqual_bases = config["mask_lowqual_bases"],
-        # qual_cutoff = config["qual_cutoff"],
-        # max_N_ratio = config["max_N_ratio"],
-        # ref_genome = config["ref_genome"],
-        # tag= config["tag"],
-        # UP2= config["UP2"],
-        # trim_len= config["trim_len"],
-        # filter_ns = config['filter_ns']
     log:
         "{sample}/logs/all_base_report.{region}.log"
     shell:
@@ -268,9 +240,6 @@ rule all_base_report:
         --snv-table {params.SNV_table} \
         --region {params.region}
         """
-
-    # script:
-    #     "scripts/all_base_report.py" 
 
 ################################################################################
 rule combine_within_tag_errors:
@@ -523,6 +492,7 @@ rule final_report:
     shell:
         """
         masq_final_report \
+            --protocol "{params.protocol}" \
             --input-snv-table {input.input_snv_table} \
             --report-primers {input.report_primers} \
             --report-rollup {input.report_rollup} \
@@ -575,7 +545,5 @@ rule filter_base_report:
             --base-report {input.base_report} \
             --filtered-base-report {output.filtered_base_report}
         """
-    # script:
-    #     "scripts/qcfilter_report.py"
 
 

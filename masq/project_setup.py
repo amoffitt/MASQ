@@ -343,20 +343,6 @@ rule sort_data_by_tag_and_locus:
         ss1ss2_unmatched_report="{sample}/reports/{sample}.unmatched_SS1_SS2_seqs.txt",
         goodtag_report="{sample}/reports/{sample}.good_tags.txt",
         badtag_report="{sample}/reports/{sample}.bad_tags.txt"
-    # params:
-    #     min_len= config["min_len"],
-    #     trim_len= config["trim_len"],
-    #     SS_sum_hamming= config["SS_sum_hamming"],
-    #     UP2_hamming= config["UP2_hamming"],
-    #     tag= config["tag"],
-    #     UP2= config["UP2"],
-    #     protocol= config["protocol"],
-    #     quick_run= config["quick_run"],
-    #     quick_run_reads = config["quick_run_reads"],
-    #     mask_lowqual_bases = config["mask_lowqual_bases"],
-    #     qual_cutoff = config["qual_cutoff"],
-    #     max_N_ratio = config["max_N_ratio"],
-    #     use_edit_distance = config["use_edit_distance"]
     log:
         "{sample}/logs/sort_data_by_tag_and_locus.log"
     run:
@@ -382,9 +368,6 @@ rule sort_data_by_tag_and_locus:
             """
         )
 
-    # script:
-    #     "scripts/sort_data_by_tag_and_locus.py"
-
 ################################################################################
 
 rule all_base_report:
@@ -402,17 +385,6 @@ rule all_base_report:
     params:
         SNV_table=lambda wildcards: wildcards.sample+"/extended_var_table.txt",
         region = lambda wildcards: wildcards.region,
-        # target_hamming = config["target_hamming"],
-        # base_error_rate = config["base_error_rate"],
-        # coverage_list = config["coverage_list"],
-        # mask_lowqual_bases = config["mask_lowqual_bases"],
-        # qual_cutoff = config["qual_cutoff"],
-        # max_N_ratio = config["max_N_ratio"],
-        # ref_genome = config["ref_genome"],
-        # tag= config["tag"],
-        # UP2= config["UP2"],
-        # trim_len= config["trim_len"],
-        # filter_ns = config['filter_ns']
     log:
         "{sample}/logs/all_base_report.{region}.log"
     shell:
@@ -678,11 +650,14 @@ rule final_report:
         report_variants = "{sample}/reports/{sample}.base_count_variantbasesonly.txt",
     output:
         combined_report="{sample}/reports/{sample}.final_report.txt"
+    params:
+        protocol = config["protocol"]
     log:
         "{sample}/logs/final_report.log"
     shell:
         """
         masq_final_report \\
+            --protocol "{params.protocol}" \\
             --input-snv-table {input.input_snv_table} \\
             --report-primers {input.report_primers} \\
             --report-rollup {input.report_rollup} \\
@@ -708,14 +683,6 @@ rule qc_plots:
         plot = "combined/"+config["groupname"]+".masq_QC_plots.png",
         qcfail = "combined/"+config["groupname"]+".qc_fail_loci.txt"
     run:
-        # import os
-        # if config["groupname"] == "test_examples_standardPCR":
-        #     for f in [output.plot, output.qcfail]:
-        #         os.makedirs(os.path.dirname(f), exist_ok=True)
-        #         with open(f, 'w') as empty_file:
-        #             pass
-        # else:
-        #     shell("R_LIBS=""; Rscript scripts/masq_QC_plots.R {output.plot} {output.qcfail} {input.bad_loci} {input.reports}")
         import masq.r_scripts
         qc_plots_path = f"{os.path.dirname(masq.r_scripts.__file__)}/masq_QC_plots.R"
         shell(
@@ -741,9 +708,5 @@ rule filter_base_report:
             --base-report {input.base_report} \\
             --filtered-base-report {output.filtered_base_report}
         """
-    # script:
-    #     "scripts/qcfilter_report.py"
-
-
 
 '''

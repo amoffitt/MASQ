@@ -288,7 +288,7 @@ def main(argv: Optional[list[str]] = None) -> None:
             qual2 = qual2[:TRIM_LEN]
 
             # check for UP2 if MASQ (not for standard PCR)
-            if not(PROTOCOL=="standard PCR"):
+            if PROTOCOL != "standard PCR":
                 # logger.info('Assuming UP2 and VT are present (Not Standard PCR)')
                 ## compute hamming distance for UP2 to each read
                 # check beginning of each read for match to UP2
