@@ -1,0 +1,80 @@
+# Config file example for MASQ pipeline
+
+# Sample information
+groupname: "test_examples"
+# One sample, or list of samples
+samples: 
+- "test_example1"
+- "test_example2"
+
+# For calculating yield
+dna_input_ng: 1000
+# samples can also be a list for multiple samples
+
+# Locus info table 
+# See example for precise format
+SNV_table: "data/locus_table.txt"
+
+# (Optional) Bad loci 
+# Loci that should be dropped from analysis for reasons not detected by automatic QC.
+# bad_loci: [5,8]
+
+# FASTQs
+# Expects r1.fastq.gz and r2.fastq.gz in folder
+fastq_dirs: 
+  test_example1: "data/fastqs/sample1"
+  test_example2: "data/fastqs/sample2"
+
+# Whole genome or other BAM file to use to identify non-target variants
+# WGS_bam and WGS_name can be lists for multiple BAMs
+# BAM must be indexed
+WGS_bam: "data/example_wgs.bam"
+WGS_name: "test_bam"
+
+# WGS_ref_fa: "references/hg19/hg19.fa"
+
+# Sequence parameters
+# remove reads shorter than this
+min_len: 100
+# trim all reads to this length before analysis
+trim_len: 140
+# varietal tag structure
+tag: "NNNWNNNWNNNWNNNWNNN"
+# universal primer structure
+UP2: "AAAGTTGCATGGTGCTGGT"
+# library protocol
+protocol: "MASQ"
+# For standard PCR, with no univeral primer, tag, or orientation
+# protocol: "standard PCR"
+
+# Error rates and coverage
+# Allowable hamming distances 
+# Universal primer
+UP2_hamming: 2
+# Locus specific primers
+SS_sum_hamming: 2
+# Full target sequence
+target_hamming: 2
+# Consensus rule
+base_error_rate: 0.2
+# Which coverage filters to apply
+coverage_list: [1, 2, 3, 5, 10, 15, 20]
+
+# Processing options
+# Rollup tags allowing 1 error
+dorollup: True
+# Mask low quality sequence bases
+mask_lowqual_bases: False
+qual_cutoff: 25
+max_N_ratio: 0.2
+filter_ns: False
+# Use edit distance instead of hamming distance
+use_edit_distance: False
+
+# For testing and debugging, option to only process X reads 
+quick_run: False
+quick_run_reads: 100000
+
+# Genome reference files
+ref_genome_fa: "../../references/hg19/hg19.fa"
+
